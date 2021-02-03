@@ -1,0 +1,35 @@
+.form-container {
+  position: relative;
+  right: -10px;
+  text-align: left;
+  width: 330px;
+  padding: 60px 40px;
+  height: 400px;
+  background-image: linear-gradient(-225deg, #fffeff 0%, #d7fffe 100%);
+  border-radius: 3px;
+}
+
+.reset-form {
+  width: 380px;
+}
+
+.inner-con {
+  display: flex;
+}
+
+.picture-container {
+  position: relative;
+  width: 330px;
+  height: 400px;
+  left: -15px;
+  background-color: white;
+  border-radius: 10px 3px 3px 10px;
+  z-index: 1;
+}
+
+.con {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background-image: linear-gradient(to right, #243949 0%, #517fa4 100%);
+}
