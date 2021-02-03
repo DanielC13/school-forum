@@ -1,4 +1,3 @@
-giref==3.3.1
 autopep8==1.5.4
 cairocffi==1.2.0
 CairoSVG==2.5.0
@@ -32,7 +31,6 @@ oauthlib==3.1.0
 pathlib==1.0.1
 pdf2image==1.14.0
 Pillow==8.0.1
-preview-generator==0.15.4
 pycodestyle==2.6.0
 pycparser==2.20
 PyJWT==1.7.1
