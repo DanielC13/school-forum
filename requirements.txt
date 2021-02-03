@@ -1,5 +1,4 @@
--e git+https://github.com/FelixSchwarz/anythumbnailer.git@deccb48c7bebfa8872032088a5686dc9682b4afd#egg=anythumbnailer
-asgiref==3.3.1
+giref==3.3.1
 autopep8==1.5.4
 cairocffi==1.2.0
 CairoSVG==2.5.0
@@ -36,7 +35,6 @@ Pillow==8.0.1
 preview-generator==0.15.4
 pycodestyle==2.6.0
 pycparser==2.20
-pyexifinfo==0.4.0
 PyJWT==1.7.1
 PyPDF2==1.26.0
 python-magic==0.4.18
