@@ -188,6 +188,8 @@ DJOSER = {
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
+SITE_ID = 1
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000"
 ]
