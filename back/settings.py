@@ -28,7 +28,7 @@ SECRET_KEY = 'jzq-#k033gtngh2cg+e13%-71x1vj0&6swb*404t8-@)x(qblp'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'school-forum-dc.herokuapp.com']
+ALLOWED_HOSTS = ['school-forum-dc.herokuapp.com', '127.0.0.1']
 
 
 # Application definition
