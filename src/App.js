@@ -8,8 +8,11 @@ import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { CookiesProvider, useCookies } from "react-cookie";
 import { UserContext } from "./UserContext";
 
-axios.defaults.baseURL = "http://127.0.0.1:8000";
-// axios.defaults.baseURL = document.location.origin
+axios.defaults.baseURL =
+  document.location.origin == "http://localhost:3000"
+    ? "http://127.0.0.1:8000"
+    : document.location.orgin;
+// console.log(axios.defaults.baseURL);
 
 function App() {
   const [user, setUser] = useState(null);
