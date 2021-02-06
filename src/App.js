@@ -11,7 +11,7 @@ import { UserContext } from "./UserContext";
 axios.defaults.baseURL =
   document.location.origin == "http://localhost:3000"
     ? "http://127.0.0.1:8000"
-    : document.location.orgin;
+    : document.location.origin;
 // console.log(axios.defaults.baseURL);
 
 function App() {

@@ -38,7 +38,6 @@ import "./Announcement.css";
 import { UserContext } from "../../UserContext";
 import { Link } from "react-router-dom";
 
-
 const handleIconRender = (file, listType) => {
   const fileSufIconList = [
     { type: <FilePdfTwoTone />, suf: [".pdf"] },
@@ -173,8 +172,12 @@ export const Announcement = (props) => {
             )}
           >
             {loading && hasMore && (
-              <div className="demo-loading-container">
-                <Spin indicator={<LoadingOutlined />} />
+              <div className="loading-container" style={{ width: "100%" }}>
+                <Spin
+                  size="large"
+                  indicator={<LoadingOutlined />}
+                  style={{ display: "block", margin: "auto" }}
+                />
               </div>
             )}
           </List>
@@ -191,11 +194,17 @@ export const AnnouncementDetail = (props) => {
 
   const fetchData = async (callback) => {
     try {
-      let reponse = await axios
+      let response = await axios
         .get(`api/announcement/${props.match.params.id}/`)
-        .then((res) => callback(res));
-      return Response.status;
+        .then((res) => {
+          callback(res);
+          // console.log(res);
+          return res.status;
+        });
+      // console.log(response);
+      return response;
     } catch (error) {
+      console.log(error);
       setError(true);
     }
   };
