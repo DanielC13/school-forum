@@ -10,9 +10,9 @@ import { UserContext } from "./UserContext";
 
 axios.defaults.baseURL =
   document.location.origin == "http://localhost:3000"
-    ? "http://127.0.0.1:8000"
+    ? "https://school-forum-dc.herokuapp.com"
     : document.location.origin;
-// console.log(axios.defaults.baseURL);
+console.log(axios.defaults.baseURL, typeof document.location.origin);
 
 function App() {
   const [user, setUser] = useState(null);
@@ -34,6 +34,7 @@ function App() {
         });
         let stat = await res.status;
         if (stat == 200) {
+          console.log(stat);
           let userdetail = await axios.get("dj-rest-auth/user/");
           setUser(userdetail.data);
           return true;
@@ -45,7 +46,7 @@ function App() {
       removeCookie("tkn");
       console.log("catch error");
       setUser(null);
-      window.location.reload();
+      // window.location.reload();
       return false;
     }
     return false;
