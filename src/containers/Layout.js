@@ -26,7 +26,7 @@ import { instanceOf } from "prop-types";
 import { withCookies, Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { UserContext } from "../UserContext";
+import { UserContext } from "../AllContext";
 import { FiLogOut } from "react-icons/fi";
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -67,6 +67,7 @@ class CusLayout extends React.Component {
           // color: this.state.theme == "light" ? "black" : "white",
           fontSize: "20px",
           marginTop: "15px",
+          color: "rgba(0, 0, 0, 0.45)",
         },
       }
     );
@@ -83,7 +84,6 @@ class CusLayout extends React.Component {
   };
 
   fetchCourse = async (callback) => {
-    console.log("fdf");
     let request = await axios.get("api/course/");
     if (request.status == 200) {
       // console.log(request.data.results);
@@ -110,7 +110,7 @@ class CusLayout extends React.Component {
             left: 0,
             zIndex: 1,
           }}
-          theme="dark"
+          theme="light"
         >
           <div className="logo" />
           <Menu
@@ -122,13 +122,34 @@ class CusLayout extends React.Component {
             //   backgroundColor:
             //     this.state.theme == "light" ? "rgba(0,0,0,0.87)" : "#242424",
             // }}
-            theme="dark"
+            theme="light"
           >
-            <Menu.Item key="1" icon={<NotificationOutlined />}>
-              <Link to="/announcement">Announcement</Link>
+            <Menu.Item
+              key="1"
+              className="nav-menu-item"
+              icon={<HomeOutlined />}
+            >
+              <Link className="link" to="/home">
+                Home
+              </Link>
             </Menu.Item>
-            <Menu.Item key="2" icon={<BookOutlined />}>
-              <Link to="/course">Course</Link>
+            <Menu.Item
+              key="2"
+              className="nav-menu-item"
+              icon={<NotificationOutlined />}
+            >
+              <Link className="link" to="/announcement">
+                Announcement
+              </Link>
+            </Menu.Item>
+            <Menu.Item
+              key="3"
+              className="nav-menu-item"
+              icon={<BookOutlined />}
+            >
+              <Link className="link" to="/course">
+                Course
+              </Link>
             </Menu.Item>
             {user.is_members.length ? (
               <>
@@ -144,13 +165,25 @@ class CusLayout extends React.Component {
                   </Menu.Item>
                 ))}
               </SubMenu> */}
-                <Menu.Item key="3" icon={<TeamOutlined />}>
-                  <Link to="/group">Group</Link>
+                <Menu.Item
+                  key="4"
+                  className="nav-menu-item"
+                  icon={<TeamOutlined />}
+                >
+                  <Link className="link" to="/group">
+                    Group
+                  </Link>
                 </Menu.Item>
               </>
             ) : (
-              <Menu.Item key="3" icon={<TeamOutlined />}>
-                <Link to="/group">Group</Link>
+              <Menu.Item
+                key="4"
+                className="nav-menu-item"
+                icon={<TeamOutlined />}
+              >
+                <Link className="link" to="/group">
+                  Group
+                </Link>
               </Menu.Item>
             )}
           </Menu>
@@ -167,7 +200,7 @@ class CusLayout extends React.Component {
             className="site-layout-background"
             style={{
               padding: "10px",
-              backgroundColor: "#002140",
+              // backgroundColor: "#002140",
               position: "fixed",
               width: "100%",
               left: "0",

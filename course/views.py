@@ -27,21 +27,23 @@ class CoursePostViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         courseid = self.kwargs.get('courseid')
-        queryset = CoursePost.objects.filter(course=courseid).order_by('-date_posted')
+        queryset = CoursePost.objects.filter(
+            course=courseid).order_by('-date_posted')
         return queryset
 
-    def put(self, request):
+    def put(self, request, **kwargs):
         serializer = self.serializer_class(data=request.data)
         print(serializer.is_valid())
         if serializer.is_valid():
             serializer.validated_data['author'] = request.user
+            serializer.validated_data['course'] = Course.objects.get(
+                pk=kwargs.get('courseid'))
             serializer.validated_data['coursefile'] = request.FILES
             serializer.save()
             return Response(serializer.data)
         print(serializer.errors)
 
 
-class AdminCoursePostViewSet(viewsets.ModelViewSet):
     serializer_class = CoursePostSerializer
     permission_classes = [IsAdminUser]
 
@@ -52,8 +54,9 @@ class AdminCoursePostViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class BatchViewSet(viewsets.ReadOnlyModelViewSet):
+class BatchViewSet(viewsets.ModelViewSet):
     serializer_class = BatchSerializer
+    permission_classes = [IsAdminCanEdit]
 
     def get_queryset(self):
         courseid = self.kwargs.get('courseid')
@@ -62,7 +65,6 @@ class BatchViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
-class AdminBatchViewSet(viewsets.ModelViewSet):
     serializer_class = BatchSerializer
     permission_classes = [IsAdminUser]
 
@@ -79,21 +81,8 @@ class BatchPostViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         courseid, batchid = itemgetter('courseid', 'batchid')(self.kwargs)
-        detail = self.request.user.detail
         queryset = BatchPost.objects.filter(
             batch=batchid, batch__course_type_id=courseid)
-        return queryset
-
-
-class AdminBatchPostViewSet(viewsets.ModelViewSet):
-    serializer_class = BatchPostSerializer
-    permission_classes = [IsAdminUser]
-
-    def get_queryset(self):
-        courseid, batchid = itemgetter('courseid', 'batchid')(self.kwargs)
-        queryset = BatchPost.objects.filter(
-            batch=batchid, batch__course_type_id=courseid)
-
         return queryset
 
 
@@ -104,24 +93,8 @@ class BatchPostReplyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         courseid, batchid, postid = itemgetter(
             'courseid', 'batchid', 'postid')(self.kwargs)
-        detail = self.request.user.detail
-        if int(courseid) == detail.course.id and int(batchid) == detail.batch.id:
-            queryset = BatchPostReply.objects.filter(
-                post=postid, post__batch=batchid, post__batch__course_type_id=courseid)
-            return queryset
-        raise PermissionDenied()
-
-
-class AdminBatchPostReplyViewSet(viewsets.ModelViewSet):
-    serializer_class = BatchPostReplySerializer
-    permission_classes = [IsAdminUser]
-
-    def get_queryset(self):
-        courseid, batchid, postid = itemgetter(
-            'courseid', 'batchid', 'postid')(self.kwargs)
         queryset = BatchPostReply.objects.filter(
             post=postid, post__batch=batchid, post__batch__course_type_id=courseid)
-
         return queryset
 
 

@@ -1,0 +1,16 @@
+$spancolor: rgba(0, 0, 0, 0.55);
+
+.card {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  width: max-content;
+  padding: 10px;
+  transition: 0.3s;
+  cursor: pointer;
+  span {
+    color: $spancolor;
+  }
+}
+
+.card:hover {
+  box-shadow: 5px 5px 10px grey;
+}

@@ -40,7 +40,7 @@ class CourseAuthorOrReadOnly(permissions.BasePermission):
         detail = request.user.detail
         if view.action in ['retrieve']:
             return True
-        if view.action in ['update', 'partial_update', 'destroy', 'list']:
+        if view.action in ['update', 'partial_update', 'destroy']:
             return obj.post.author == request.user and obj.post.status == "pending" or request.user.is_staff
         return False
 
@@ -58,8 +58,8 @@ class BatchAuthorOrReadOnly(permissions.BasePermission):
         detail = request.user.detail
         if view.action in ['retrieve']:
             return True
-        if view.action in ['create', 'update', 'partial_update', 'destroy', 'list']:
-            return obj.post.author == request.user
+        if view.action in ['update', 'partial_update', 'destroy']:
+            return obj.post.author == request.user or request.user.is_staff
         return False
 
 
@@ -80,7 +80,7 @@ class IsThisCourse(permissions.BasePermission):
         detail = request.user.detail
         if view.action in ['retrieve']:
             return True
-        if view.action in ['update', 'partial_update', 'destroy', 'list'] and detail.course == obj.course:
+        if view.action in ['update', 'partial_update', 'destroy'] and detail.course == obj.course:
             return obj.author == request.user and obj.status == "pending" or request.user.is_staff
         return False
 
@@ -89,7 +89,7 @@ class IsThisCourse(permissions.BasePermission):
 class IsThisBatch(permissions.BasePermission):
     def has_permission(self, request, view):
         detail = request.user.detail
-        return detail.batch.id == int(request.parser_context['kwargs']['batchid'])
+        return detail.batch.id == int(request.parser_context['kwargs']['batchid']) and detail.course.id == int(request.parser_context['kwargs']['courseid']) or request.user.is_staff
 
     def has_object_permission(self, request, view, obj):
         detail = request.user.detail
@@ -100,8 +100,14 @@ class IsThisBatch(permissions.BasePermission):
 
 # for replies
 class IsThisBatchPost(permissions.BasePermission):
+    def has_permission(self, request, view):
+        detail = request.user.detail
+        return int(request.parser_context['kwargs']['courseid']) == detail.course.id and detail.batch.id == int(request.parser_context['kwargs']['batchid']) or request.user.is_staff
+
     def has_object_permission(self, request, view, obj):
         detail = request.user.detail
-        if view.action in ['create', 'retrieve', 'update', 'partial_update', 'destroy', 'list'] and detail.batch == obj.post.batch:
-            return obj.reply_by == request.user
+        if request.user.is_staff:
+            return True
+        if view.action in ['retrieve', 'update', 'partial_update', 'destroy'] and detail.batch == obj.post.batch:
+            return obj.reply_by == request.user or obj.post.author == request.user
         return False

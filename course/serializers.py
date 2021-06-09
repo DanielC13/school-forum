@@ -27,8 +27,8 @@ class CoursePostFileSerializer(serializers.ModelSerializer):
 
 class CoursePostSerializer(serializers.ModelSerializer):
     author = Author(read_only=True)
-    # coursepostfile_set = CoursePostFileSerializer(
-    #     many=True, required=False, allow_null=True)
+    coursefile = CoursePostFileSerializer(
+        many=True, required=False, allow_null=True)
 
     class Meta:
         model = CoursePost
@@ -36,13 +36,13 @@ class CoursePostSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         print(validated_data)
-        # files = validated_data.pop('coursefile').getlist('coursefile')
-        # post = CoursePost.objects.create(**validated_data)
-        # if len(files):
-        #     for file in files:
-        #         fl = CoursePostFile(file=file, post=post)
-        #         fl.save()
-        # return post
+        files = validated_data.pop('coursefile').getlist('coursefile')
+        post = CoursePost.objects.create(**validated_data)
+        if len(files):
+            for file in files:
+                fl = CoursePostFile(file=file, post=post)
+                fl.save()
+        return post
 
 
 class BatchSerializer(serializers.ModelSerializer):

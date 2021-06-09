@@ -30,7 +30,7 @@ import {
 import "./Course.css";
 import Loading from "../Loading";
 import axios from "axios";
-import { UserContext } from "../../UserContext";
+import { UserContext, CourseContext } from "../../AllContext";
 import InfiniteScroll from "react-infinite-scroller";
 import { convertUTC, fileType, fileName } from "../tools";
 
@@ -92,7 +92,7 @@ export const Course = (props) => {
     }
     setError(request.status);
   };
-  console.log(data, error);
+  // console.log(data, error);
   return data ? (
     <div style={{ display: "flex", flexWrap: "wrap" }}>
       {data.results.map((course) => (
@@ -125,6 +125,7 @@ export const CoursePost = (props) => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasmore] = useState(true);
   const { user } = useContext(UserContext);
+  const { allcourse } = useContext(CourseContext);
 
   useEffect(() => {
     fetchData((res) => {
@@ -141,13 +142,16 @@ export const CoursePost = (props) => {
   );
 
   const fetchData = async (callback) => {
-    // console.log(axios.defaults.headers.common);
-    let course = await axios.get("api/course/").then((e) => e.data.results);
-    console.log(course);
-    axios
-      .get(`api/course/${props.location.state.course.id}/posts/?page=${page}`)
-      .then((res) => callback(res.data));
-    setPage(page + 1);
+    // let course = await axios.get("api/course/").then((e) => e.data.results);
+    let findcourse = allcourse.find((e) => e.name == props.match.params.course);
+    if (findcourse) {
+      axios
+        .get(`api/course/${findcourse.id}/posts/?page=${page}`)
+        .then((res) => callback(res.data));
+      setPage(page + 1);
+    } else {
+      props.history.push("/course");
+    }
   };
 
   const handleInfiniteOnLoad = () => {
@@ -206,7 +210,9 @@ export const CoursePost = (props) => {
               <List.Item
                 className="post-con"
                 key={item.id}
-                onClick={() => props.history.push(`course/${item.id}`)}
+                onClick={() =>
+                  props.history.push(`${props.match.params.course}/${item.id}`)
+                }
               >
                 <List.Item.Meta
                   title={<h4>{item.title}</h4>}
@@ -230,6 +236,18 @@ export const CoursePost = (props) => {
 
 export const CoursePostAdd = (props) => {
   const { user } = useContext(UserContext);
+  const [course, setCourse] = useState({});
+
+  useEffect(() => {
+    fetchCourse();
+  }, []);
+
+  const fetchCourse = async () => {
+    let course = await axios.get("api/course/").then((e) => e.data.results);
+    let findcourse = course.find((e) => e.name == props.match.params.course);
+    console.log(findcourse);
+    findcourse ? setCourse(findcourse) : props.history.push("/course");
+  };
 
   const normFile = (e) => {
     console.log("Upload event:", e);
@@ -238,16 +256,6 @@ export const CoursePostAdd = (props) => {
     }
     return e && e.fileList;
   };
-  const validateMessages = {
-    required: "${label} is required!",
-    types: {
-      email: "${label} is not a valid email!",
-      number: "${label} is not a valid number!",
-    },
-    number: {
-      range: "${label} must be between ${min} and ${max}",
-    },
-  };
   const dummyRequest = ({ file, onSuccess }) => {
     setTimeout(() => {
       onSuccess("ok");
@@ -255,6 +263,7 @@ export const CoursePostAdd = (props) => {
   };
 
   const onFinish = (values) => {
+    console.log(course.id);
     console.log(values);
     console.log(user);
     const fd = new FormData();
@@ -262,21 +271,20 @@ export const CoursePostAdd = (props) => {
     fd.append("content", values.content);
     if (values.upload) {
       for (let i = 0; i < values.upload.length; i++) {
-        fd.append("announcefile", values.upload[i].originFileObj);
+        fd.append("coursefile", values.upload[i].originFileObj);
       }
     }
     axios
-      .put("api/course/", fd, {
+      .put(`api/course/${course.id}/posts/`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       })
-      .then((res) => props.history.push("/announcement"));
+      .then((res) => props.history.push(`/course/${course.name}`));
   };
 
   return (
     <Form
       name="nest-messages"
       onFinish={onFinish}
-      validateMessages={validateMessages}
       style={{ padding: "20px", minHeight: "40vh" }}
     >
       <Form.Item name="title" label="Title" rules={[{ required: true }]}>
@@ -308,5 +316,226 @@ export const CoursePostAdd = (props) => {
         </Button>
       </Form.Item>
     </Form>
+  );
+};
+
+export const CoursePostDetail = (props) => {
+  const [item, setItem] = useState([]);
+  const [error, setError] = useState(false);
+  const { user } = useContext(UserContext);
+
+  const fetchData = async (callback) => {
+    let course = await axios.get("api/course/").then((e) => e.data.results);
+    let findcourse = await course.find(
+      (e) => e.name == props.match.params.course
+    );
+    try {
+      let response = await axios
+        .get(`api/course/${findcourse.id}/posts/${props.match.params.id}/`)
+        .then((res) => {
+          callback(res);
+          console.log(res);
+          return res.status;
+        });
+      return response;
+    } catch (error) {
+      console.log(error);
+      setError(true);
+    }
+    // props.history.push("/course");
+  };
+
+  useEffect(() => {
+    fetchData((res) => setItem(res.data));
+  }, []);
+
+  const deletepost = async () => {
+    let request = await axios.delete(
+      `api/announcement/${props.match.params.id}/`
+    );
+    let status = await request.status;
+    if (status == 204) {
+      props.history.push({
+        pathname: "/announcement",
+        state: {
+          delete_successful: true,
+        },
+      });
+    } else {
+      console.log(request);
+    }
+  };
+
+  console.log(item.author, !error);
+  return item.author && !error ? (
+    <List.Item className="post-con" key={item.id}>
+      {item.author.id === user.pk ? (
+        <div style={{ display: "flex", float: "right" }}>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() =>
+              props.history.push({
+                pathname: `${item.id}/edit`,
+                state: {
+                  postid: item.id,
+                },
+              })
+            }
+          >
+            edit
+          </Button>
+          <Popconfirm
+            style={{ marginLeft: "10px" }}
+            placement="bottomRight"
+            title="Are you sure want to delete this post?"
+            onConfirm={() => deletepost()}
+            okText="Yes"
+            cancelText="No"
+            icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
+          >
+            <Button icon={<DeleteOutlined />} danger type="text">
+              delete
+            </Button>
+          </Popconfirm>
+        </div>
+      ) : (
+        <span></span>
+      )}
+      <List.Item.Meta
+        title={<h2>{item.title}</h2>}
+        description={
+          item.author.username + " | " + convertUTC(item.date_posted)
+        }
+      />
+      {item.content}
+      <div style={{ width: "50%", margin: "20px" }}>
+        <Upload
+          listType="picture"
+          defaultFileList={[
+            ...item.coursefile.map((f) => {
+              f.uid = f.id;
+              f.name = fileName(f.file);
+              f.url = f.file;
+              f.status = "done";
+              return f;
+            }),
+          ]}
+          iconRender={handleIconRender}
+          disabled={true}
+        ></Upload>
+      </div>
+    </List.Item>
+  ) : (
+    <h3>404 Not found</h3>
+  );
+};
+
+export const CoursePostEdit = (props) => {
+  const [post, setPost] = useState(null);
+  const normFile = (e) => {
+    console.log("Upload event:", e);
+    if (Array.isArray(e)) {
+      return e;
+    }
+    return e && e.fileList;
+  };
+  const dummyRequest = ({ file, onSuccess }) => {
+    setTimeout(() => {
+      onSuccess("ok");
+    }, 0);
+  };
+  const onFinish = (values) => {
+    console.log(values);
+    const fd = new FormData();
+    fd.append("title", values.title);
+    fd.append("content", values.content);
+    if (values.upload) {
+      let newupload = values.upload.filter((e) => !e.id);
+      let oldupload = values.upload.filter((e) => e.id);
+      let deleteoldupload = post.announcefile.filter(
+        (e) => !oldupload.find((f) => f.id == e.id)
+      );
+      for (const i in newupload) {
+        fd.append("announcefile", newupload[i].originFileObj);
+      }
+      if (deleteoldupload.length) {
+        fd.append(
+          "deletefile",
+          deleteoldupload.map((e) => e.id)
+        );
+      } else {
+        fd.append("deletefile", 0);
+      }
+      console.log(deleteoldupload);
+    } else {
+      fd.append("deletefile", 0);
+    }
+    axios
+      .put(`api/announcement/${props.match.params.id}/`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) =>
+        props.history.push(`/announcement/${props.match.params.id}`)
+      );
+  };
+
+  const loadData = async () => {
+    let request = await axios.get(`api/announcement/${props.match.params.id}/`);
+    let data = await request.data;
+    setPost(data);
+  };
+  useEffect(() => {
+    loadData();
+  }, []);
+  return post ? (
+    <Form
+      name="nest-messages"
+      onFinish={onFinish}
+      style={{ padding: "20px", minHeight: "40vh" }}
+      initialValues={{
+        ["title"]: post.title,
+        ["content"]: post.content,
+      }}
+    >
+      <Form.Item name="title" label="Title" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="content" label="Content" rules={[{ required: true }]}>
+        <Input.TextArea />
+      </Form.Item>
+      <Form.Item
+        name="upload"
+        label="Upload"
+        valuePropName="fileList"
+        getValueFromEvent={normFile}
+      >
+        <Upload
+          name="logo"
+          customRequest={dummyRequest}
+          listType="picture"
+          iconRender={handleIconRender}
+          style={{ maxWidth: "300px" }}
+          defaultFileList={[
+            ...post.announcefile.map((f) => {
+              f.uid = f.id;
+              f.name = fileName(f.file);
+              f.url = f.file;
+              f.status = "done";
+              return f;
+            }),
+          ]}
+        >
+          <Button icon={<UploadOutlined />}>Click to upload</Button>
+        </Upload>
+      </Form.Item>
+
+      <Form.Item style={{ float: "right" }}>
+        <Button type="primary" htmlType="submit" size="large">
+          Submit
+        </Button>
+      </Form.Item>
+    </Form>
+  ) : (
+    <h3>:3</h3>
   );
 };

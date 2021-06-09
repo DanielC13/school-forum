@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   List,
   message,
@@ -35,8 +35,8 @@ import axios from "axios";
 import { convertUTC, fileType, fileName } from "../tools";
 import FileViewer from "react-file-viewer";
 import "./Announcement.css";
-import { UserContext } from "../../UserContext";
-import { Link } from "react-router-dom";
+import { UserContext } from "../../AllContext";
+import { ApiAnnouncement } from "../apiRequest";
 
 const handleIconRender = (file, listType) => {
   const fileSufIconList = [
@@ -102,10 +102,7 @@ export const Announcement = (props) => {
   );
 
   const fetchData = (callback) => {
-    // console.log(axios.defaults.headers.common);
-    axios
-      .get(`api/announcement/?page=${page}`)
-      .then((res) => callback(res.data));
+    ApiAnnouncement("get", (res) => callback(res.data), { page: page });
     setPage(page + 1);
   };
 
@@ -113,7 +110,6 @@ export const Announcement = (props) => {
     console.log("hello?");
     setLoading(true);
     if (status.next == null) {
-      // message.warning("Infinite List loaded all");
       setHasmore(false);
       setLoading(false);
       return;
@@ -229,7 +225,7 @@ export const AnnouncementDetail = (props) => {
       console.log(request);
     }
   };
-
+  console.log(item.author);
   return item.author && !error ? (
     <List.Item className="post-con" key={item.id}>
       {item.author.id === user.pk ? (
@@ -301,16 +297,6 @@ export const AnnouncementAdd = (props) => {
     }
     return e && e.fileList;
   };
-  const validateMessages = {
-    required: "${label} is required!",
-    types: {
-      email: "${label} is not a valid email!",
-      number: "${label} is not a valid number!",
-    },
-    number: {
-      range: "${label} must be between ${min} and ${max}",
-    },
-  };
   const dummyRequest = ({ file, onSuccess }) => {
     setTimeout(() => {
       onSuccess("ok");
@@ -338,7 +324,6 @@ export const AnnouncementAdd = (props) => {
     <Form
       name="nest-messages"
       onFinish={onFinish}
-      validateMessages={validateMessages}
       style={{ padding: "20px", minHeight: "40vh" }}
     >
       <Form.Item name="title" label="Title" rules={[{ required: true }]}>
@@ -382,16 +367,6 @@ export const AnnouncementEdit = (props) => {
       return e;
     }
     return e && e.fileList;
-  };
-  const validateMessages = {
-    required: "${label} is required!",
-    types: {
-      email: "${label} is not a valid email!",
-      number: "${label} is not a valid number!",
-    },
-    number: {
-      range: "${label} must be between ${min} and ${max}",
-    },
   };
   const dummyRequest = ({ file, onSuccess }) => {
     setTimeout(() => {
@@ -438,14 +413,13 @@ export const AnnouncementEdit = (props) => {
     let data = await request.data;
     setPost(data);
   };
-  useLayoutEffect(() => {
+  useEffect(() => {
     loadData();
   }, []);
   return post ? (
     <Form
       name="nest-messages"
       onFinish={onFinish}
-      validateMessages={validateMessages}
       style={{ padding: "20px", minHeight: "40vh" }}
       initialValues={{
         ["title"]: post.title,

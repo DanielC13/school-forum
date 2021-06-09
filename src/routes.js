@@ -6,15 +6,22 @@ import {
   PasswordResetConfirm,
 } from "./containers/Login";
 import CusLayout from "./containers/Layout";
+import { HomePage } from "./components/home/Home";
+import { RegisterUser } from "./components/register/Register";
 import {
   Announcement,
   AnnouncementDetail,
   AnnouncementAdd,
   AnnouncementEdit,
 } from "./components/announcement/Announcement";
-import { Course, CoursePost, CoursePostAdd } from "./components/course/Course";
+import {
+  Course,
+  CoursePost,
+  CoursePostAdd,
+  CoursePostDetail,
+  CoursePostEdit,
+} from "./components/course/Course";
 import { Group, GroupPost } from "./components/group/Group";
-import { UserContext } from "./UserContext";
 
 const BaseRouter = (props) => {
   const {
@@ -28,6 +35,9 @@ const BaseRouter = (props) => {
         <div>
           {props.user.is_staff ? (
             <Switch>
+              {/* This is for admin */}
+              <Route exact path="/home" component={HomePage} />
+              <Route exact path="/register" component={RegisterUser} />
               <Route exact path="/announcement" component={Announcement} />
               <Route
                 exact
@@ -51,12 +61,23 @@ const BaseRouter = (props) => {
                 path="/course/:course/add"
                 component={CoursePostAdd}
               />
+              <Route
+                exact
+                path="/course/:course/:id"
+                component={CoursePostDetail}
+              />
+              <Route
+                exact
+                path="/course/:course/:id/edit"
+                component={CoursePostEdit}
+              />
               <Route exact path="/group" component={Group} />
               <Route exact path="/group/:id" component={GroupPost} />
-              <Redirect from="*" to="/announcement" />
+              <Redirect from="*" to="/home" />
             </Switch>
           ) : (
             <Switch>
+            {/* this is for student */}
               <Route exact path="/announcement" component={Announcement} />
               <Route
                 exact
@@ -67,7 +88,7 @@ const BaseRouter = (props) => {
               <Route exact path="/course/:course" component={CoursePost} />
               <Route exact path="/group" component={Group} />
               <Route exact path="/group/:id" component={GroupPost} />
-              <Redirect from="*" to="/announcement" />
+              <Redirect from="*" to="/home" />
             </Switch>
           )}
         </div>

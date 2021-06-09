@@ -6,17 +6,24 @@ import CusLayout from "./containers/Layout";
 import BaseRouter from "./routes";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { CookiesProvider, useCookies } from "react-cookie";
-import { UserContext } from "./UserContext";
+import { UserContext, CourseContext } from "./AllContext";
 
-axios.defaults.baseURL =
-  document.location.origin == "http://localhost:3000"
-    ? "https://school-forum-dc.herokuapp.com"
-    : document.location.origin;
+// axios.defaults.baseURL =
+//   document.location.origin == "http://localhost:3000"
+//     ? "https://school-forum-dc.herokuapp.com"
+//     : document.location.origin;
+
+axios.defaults.baseURL = "http://127.0.0.1:8000";
 console.log(axios.defaults.baseURL, typeof document.location.origin);
 
 function App() {
   const [user, setUser] = useState(null);
-  const ProviderValue = useMemo(() => ({ user, setUser }), [user, setUser]);
+  const [allcourse, setAllCourse] = useState([]);
+  const UserProviderValue = useMemo(() => ({ user, setUser }), [user, setUser]);
+  const CourseProviderValue = useMemo(() => ({ allcourse, setAllCourse }), [
+    allcourse,
+    setAllCourse,
+  ]);
   const [cookies, setCookie, removeCookie] = useCookies(["token"]);
   let boo = () => {
     if (cookies.tkn) {
@@ -36,7 +43,9 @@ function App() {
         if (stat == 200) {
           console.log(stat);
           let userdetail = await axios.get("dj-rest-auth/user/");
+          let allcourse = await axios.get("api/course/");
           setUser(userdetail.data);
+          setAllCourse(allcourse.data.results);
           return true;
         }
         return false;
@@ -69,14 +78,16 @@ function App() {
         rel="stylesheet"
       ></link>
       <CookiesProvider>
-        <UserContext.Provider value={ProviderValue}>
-          <BrowserRouter>
-            <BaseRouter
-              href="this.props.href"
-              verify={verification}
-              user={user}
-            ></BaseRouter>
-          </BrowserRouter>
+        <UserContext.Provider value={UserProviderValue}>
+          <CourseContext.Provider value={CourseProviderValue}>
+            <BrowserRouter>
+              <BaseRouter
+                href="this.props.href"
+                verify={verification}
+                user={user}
+              ></BaseRouter>
+            </BrowserRouter>
+          </CourseContext.Provider>
         </UserContext.Provider>
       </CookiesProvider>
     </div>

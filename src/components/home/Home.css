@@ -1,0 +1,20 @@
+.card {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
+  padding: 10px;
+  -webkit-transition: 0.3s;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.card span {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.card:hover {
+  -webkit-box-shadow: 5px 5px 10px grey;
+          box-shadow: 5px 5px 10px grey;
+}
+/*# sourceMappingURL=Home.css.map */

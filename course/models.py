@@ -27,7 +27,7 @@ class CoursePost(models.Model):
 
 class CoursePostFile(models.Model):
     post = models.ForeignKey(
-        CoursePost, on_delete=models.CASCADE, default=None, blank=True)
+        CoursePost, on_delete=models.CASCADE, default=None, blank=True,related_name="coursefile")
     file = models.FileField(upload_to='coursepost_file/', null=True)
 
     def __str__(self):
