@@ -1,5 +1,5 @@
 import React from "react";
-import { UserAddOutlined } from "@ant-design/icons";
+import { UserAddOutlined, UserOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import "./Home.css";
 
@@ -12,10 +12,10 @@ export const HomePage = (props) => {
   return (
     <React.Fragment>
       <div className="card">
-        <Link to="/register">
-          <UserAddOutlined className="icon" style={iconStyle} />
-          <div>
-            <span>Register New User</span>
+        <Link to="/users">
+          <UserOutlined className="icon" style={iconStyle} />
+          <div className="con-title">
+            <span>List Of User</span>
           </div>
         </Link>
       </div>

@@ -7,7 +7,7 @@ import {
 } from "./containers/Login";
 import CusLayout from "./containers/Layout";
 import { HomePage } from "./components/home/Home";
-import { RegisterUser } from "./components/register/Register";
+import { RegisterUser, UserList } from "./components/users/Users";
 import {
   Announcement,
   AnnouncementDetail,
@@ -37,6 +37,7 @@ const BaseRouter = (props) => {
             <Switch>
               {/* This is for admin */}
               <Route exact path="/home" component={HomePage} />
+              <Route exact path="/users" component={UserList} />
               <Route exact path="/register" component={RegisterUser} />
               <Route exact path="/announcement" component={Announcement} />
               <Route
@@ -77,7 +78,7 @@ const BaseRouter = (props) => {
             </Switch>
           ) : (
             <Switch>
-            {/* this is for student */}
+              {/* this is for student */}
               <Route exact path="/announcement" component={Announcement} />
               <Route
                 exact

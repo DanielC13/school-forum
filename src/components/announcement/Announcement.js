@@ -190,13 +190,9 @@ export const AnnouncementDetail = (props) => {
 
   const fetchData = async (callback) => {
     try {
-      let response = await axios
-        .get(`api/announcement/${props.match.params.id}/`)
-        .then((res) => {
-          callback(res);
-          // console.log(res);
-          return res.status;
-        });
+      let response = await ApiAnnouncement("retrieve", (res) => callback(res), {
+        id: props.match.params.id,
+      });
       // console.log(response);
       return response;
     } catch (error) {
@@ -210,20 +206,19 @@ export const AnnouncementDetail = (props) => {
   }, []);
 
   const deletepost = async () => {
-    let request = await axios.delete(
-      `api/announcement/${props.match.params.id}/`
+    let request = await ApiAnnouncement(
+      "delete",
+      (res) =>
+        props.history.push({
+          pathname: "/announcement",
+          state: {
+            delete_successful: true,
+          },
+        }),
+      {
+        id: props.match.params.id,
+      }
     );
-    let status = await request.status;
-    if (status == 204) {
-      props.history.push({
-        pathname: "/announcement",
-        state: {
-          delete_successful: true,
-        },
-      });
-    } else {
-      console.log(request);
-    }
   };
   console.log(item.author);
   return item.author && !error ? (
@@ -313,11 +308,9 @@ export const AnnouncementAdd = (props) => {
         fd.append("announcefile", values.upload[i].originFileObj);
       }
     }
-    axios
-      .put("api/announcement/", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((res) => props.history.push("/announcement"));
+    ApiAnnouncement("post", (res) => props.history.push("/announcement"), {
+      formdata: fd,
+    });
   };
 
   return (
@@ -399,13 +392,11 @@ export const AnnouncementEdit = (props) => {
     } else {
       fd.append("deletefile", 0);
     }
-    axios
-      .put(`api/announcement/${props.match.params.id}/`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((res) =>
-        props.history.push(`/announcement/${props.match.params.id}`)
-      );
+    ApiAnnouncement(
+      "put",
+      (res) => props.history.push(`/announcement/${props.match.params.id}`),
+      { id: props.match.params.id, formdata: fd }
+    );
   };
 
   const loadData = async () => {

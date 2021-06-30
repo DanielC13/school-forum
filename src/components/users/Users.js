@@ -47,6 +47,19 @@ const tailFormItemLayout = {
   },
 };
 
+export const UserList = (props) => {
+  return (
+    <div className="card">
+        <Link to="/register">
+          <UserAddOutlined className="icon" style={iconStyle} />
+          <div className="con-title">
+            <span>Register New User</span>
+          </div>
+        </Link>
+      </div>
+  )
+};
+
 export const RegisterUser = (props) => {
   useEffect(() => {}, []);
   const onFinish = (values) => {
