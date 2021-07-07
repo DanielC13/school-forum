@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { UserAddOutlined } from "@ant-design/icons";
 import {
   Form,
@@ -12,7 +13,7 @@ import {
   AutoComplete,
 } from "antd";
 import axios from "axios";
-import { ApiRegister, ApiCourse, ApiBatch } from "../apiRequest";
+import { ApiUsers, ApiCourse, ApiBatch } from "../apiRequest";
 
 const { Option } = Select;
 
@@ -48,23 +49,31 @@ const tailFormItemLayout = {
 };
 
 export const UserList = (props) => {
+  let iconStyle = {
+    fontSize: "30px",
+    width: "100px",
+    color: "rgba(0, 0, 0, 0.45)",
+  };
+  useEffect(() => {
+    
+  }, []);
   return (
     <div className="card">
-        <Link to="/register">
-          <UserAddOutlined className="icon" style={iconStyle} />
-          <div className="con-title">
-            <span>Register New User</span>
-          </div>
-        </Link>
-      </div>
-  )
+      <Link to="/users/register">
+        <UserAddOutlined className="icon" style={iconStyle} />
+        <div className="con-title">
+          <span>Register New User</span>
+        </div>
+      </Link>
+    </div>
+  );
 };
 
 export const RegisterUser = (props) => {
   useEffect(() => {}, []);
   const onFinish = (values) => {
     console.log("Received values of form: ", values);
-    ApiRegister(values);
+    ApiUsers(values);
   };
   return (
     <div>

@@ -1,7 +1,29 @@
 import axios from "axios";
 
-export const ApiRegister = (data) => {
-  axios.post("api/register/", data).then((res) => console.log(res));
+export const ApiUsers = (method, callback, args) => {
+  if (!args) return console.log("requires object arguments");
+  switch (method) {
+    case "get":
+      console.log("GET method");
+      if (args.page) {
+        axios
+          .get(`api/register/?page=${args.page}`)
+          .then((res) => callback(res));
+      } else {
+        console.log('POST method requires "page" in object argument ');
+      }
+      break;
+    case "post":
+      console.log("POST method");
+
+      break;
+    case "delete":
+      console.log("DELETE method");
+
+      break;
+    default:
+      console.log("get, retrieve, post, put & delete method is available");
+  }
 };
 
 export const ApiAnnouncement = (method, callback, args) => {
@@ -75,9 +97,9 @@ export const ApiAnnouncement = (method, callback, args) => {
   }
 };
 
-export const ApiCourse = (method,callback,args) => {
+export const ApiCourse = (method, callback, args) => {
   return;
-}
+};
 
 // export const ApiBatch = (callback) => {
 //     axios.get("api/batch/").then(res => callback(res))

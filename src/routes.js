@@ -38,7 +38,7 @@ const BaseRouter = (props) => {
               {/* This is for admin */}
               <Route exact path="/home" component={HomePage} />
               <Route exact path="/users" component={UserList} />
-              <Route exact path="/register" component={RegisterUser} />
+              <Route exact path="/users/register" component={RegisterUser} />
               <Route exact path="/announcement" component={Announcement} />
               <Route
                 exact
