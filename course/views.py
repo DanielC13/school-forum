@@ -19,6 +19,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     queryset = Course.objects.all()
     permission_classes = [IsAuthenticated, IsAdminCanEdit]
+    pagination_class = None
 
 
 class CoursePostViewSet(viewsets.ModelViewSet):
@@ -43,7 +44,6 @@ class CoursePostViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         print(serializer.errors)
 
-
     serializer_class = CoursePostSerializer
     permission_classes = [IsAdminUser]
 
@@ -63,7 +63,6 @@ class BatchViewSet(viewsets.ModelViewSet):
         queryset = Batch.objects.filter(course_type=courseid)
 
         return queryset
-
 
     serializer_class = BatchSerializer
     permission_classes = [IsAdminUser]
@@ -155,3 +154,4 @@ class RegisterViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [IsAdminUser]
+    pagination_class = None

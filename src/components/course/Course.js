@@ -95,7 +95,7 @@ export const Course = (props) => {
   // console.log(data, error);
   return data ? (
     <div style={{ display: "flex", flexWrap: "wrap" }}>
-      {data.results.map((course) => (
+      {data.map((course) => (
         <Card
           style={{ width: 200, margin: "10px" }}
           hoverable={true}
@@ -243,7 +243,7 @@ export const CoursePostAdd = (props) => {
   }, []);
 
   const fetchCourse = async () => {
-    let course = await axios.get("api/course/").then((e) => e.data.results);
+    let course = await axios.get("api/course/").then((e) => e.data);
     let findcourse = course.find((e) => e.name == props.match.params.course);
     console.log(findcourse);
     findcourse ? setCourse(findcourse) : props.history.push("/course");
@@ -325,7 +325,7 @@ export const CoursePostDetail = (props) => {
   const { user } = useContext(UserContext);
 
   const fetchData = async (callback) => {
-    let course = await axios.get("api/course/").then((e) => e.data.results);
+    let course = await axios.get("api/course/").then((e) => e.data);
     let findcourse = await course.find(
       (e) => e.name == props.match.params.course
     );

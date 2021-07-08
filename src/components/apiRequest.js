@@ -5,13 +5,9 @@ export const ApiUsers = (method, callback, args) => {
   switch (method) {
     case "get":
       console.log("GET method");
-      if (args.page) {
         axios
-          .get(`api/register/?page=${args.page}`)
+          .get(`api/register/`)
           .then((res) => callback(res));
-      } else {
-        console.log('POST method requires "page" in object argument ');
-      }
       break;
     case "post":
       console.log("POST method");

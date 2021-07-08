@@ -1,6 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-import { UserAddOutlined } from "@ant-design/icons";
+import Highlighter from "react-highlight-words";
+import {
+  UserAddOutlined,
+  SearchOutlined,
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
+} from "@ant-design/icons";
 import {
   Form,
   Input,
@@ -11,9 +17,12 @@ import {
   Checkbox,
   Button,
   AutoComplete,
+  Table,
+  Space,
 } from "antd";
 import axios from "axios";
-import { ApiUsers, ApiCourse, ApiBatch } from "../apiRequest";
+import { ApiUsers } from "../apiRequest";
+import { CourseContext } from "../../AllContext";
 
 const { Option } = Select;
 
@@ -49,22 +58,226 @@ const tailFormItemLayout = {
 };
 
 export const UserList = (props) => {
+  const [searchTxt, setSearchTxt] = useState("");
+  const [searchedCol, setSearchedCol] = useState("");
+  const [data, setData] = useState([]);
+  const { allcourse } = useContext(CourseContext);
+  let searchInput = null;
   let iconStyle = {
     fontSize: "30px",
     width: "100px",
     color: "rgba(0, 0, 0, 0.45)",
   };
+
+  const getColumnSearchProps = (dataIndex) => ({
+    filterDropdown: ({
+      setSelectedKeys,
+      selectedKeys,
+      confirm,
+      clearFilters,
+    }) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={(node) => {
+            searchInput = node;
+          }}
+          placeholder={`Search ${dataIndex}`}
+          value={selectedKeys[0]}
+          onChange={(e) =>
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{ marginBottom: 8, display: "block" }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered) => (
+      <SearchOutlined style={{ color: filtered ? "#1890ff" : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      if (dataIndex == "detail.batch" && record.detail) {
+        return record.detail.batch.name
+          ? record.detail.batch.name
+              .toString()
+              .toLowerCase()
+              .includes(value.toLowerCase())
+          : "";
+      }
+      return record[dataIndex]
+        ? record[dataIndex]
+            .toString()
+            .toLowerCase()
+            .includes(value.toLowerCase())
+        : "";
+    },
+    onFilterDropdownVisibleChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedCol === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: "#ffc069", padding: 0 }}
+          searchWords={[searchTxt]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ""}
+        />
+      ) : (
+        text
+      ),
+  });
+
+  const handleSearch = (selectedKeys, confirm, dataIndex) => {
+    confirm();
+    setSearchTxt(selectedKeys[0]);
+    setSearchedCol(dataIndex);
+  };
+
+  const handleReset = (clearFilters) => {
+    clearFilters();
+    setSearchTxt("");
+  };
+
+  const sortAlphabet = (a, b) => {
+    let nameA = a.toUpperCase();
+    let nameB = b.toUpperCase();
+    if (nameA < nameB) {
+      return -1;
+    }
+    if (nameA > nameB) {
+      return 1;
+    }
+    return 0;
+  };
+  const columns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+      width: "10%",
+      ...getColumnSearchProps("age"),
+      sorter: (a, b) => a.id - b.id,
+      sortDirections: ["descend", "ascend"],
+    },
+    {
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
+      width: "20%",
+      ...getColumnSearchProps("username"),
+      sorter: (a, b) => sortAlphabet(a.username, b.username),
+      sortDirections: ["descend", "ascend"],
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      width: "20%",
+      ...getColumnSearchProps("email"),
+      sorter: (a, b) => sortAlphabet(a.email, b.email),
+    },
+    {
+      title: "Admin",
+      dataIndex: "admin",
+      key: "admin",
+      filters: [
+        {
+          text: "Is admin",
+          value: true,
+        },
+        {
+          text: "Not admin",
+          value: false,
+        },
+      ],
+      align: "center",
+      onFilter: (value, record) => record.is_staff == value,
+      render: (text, record) =>
+        record.is_staff ? (
+          <CheckCircleTwoTone twoToneColor="#52c41a" />
+        ) : (
+          <CloseCircleTwoTone twoToneColor="#eb2f96" />
+        ),
+    },
+    {
+      title: "Course",
+      dataIndex: "course",
+      key: "course",
+      filters: allcourse.reduce(
+        (arry, obj) => arry.concat({ text: obj.name, value: obj.id }),
+        []
+      ),
+      onFilter: (value, record) => record.course == value,
+      sortDirections: ["descend", "ascend"],
+      render: (text, record) => {
+        if (record.detail) return record.detail.course.name;
+        return "None";
+      },
+    },
+    {
+      title: "Batch",
+      dataIndex: "batch",
+      key: "batch",
+      ...getColumnSearchProps("detail.batch"),
+      render: (text, record) => {
+        if (record.detail) return record.detail.batch.name;
+        return "None";
+      },
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (text, record) => (
+        <Space size="middle">
+          <Link to={`/users/${record.id}`}>action</Link>
+        </Space>
+      ),
+    },
+  ];
+
+  const fetchData = (callback) => {
+    ApiUsers("get", (res) => callback(res), {});
+  };
+
   useEffect(() => {
-    
+    fetchData((res) => setData(res.data));
   }, []);
   return (
-    <div className="card">
-      <Link to="/users/register">
-        <UserAddOutlined className="icon" style={iconStyle} />
-        <div className="con-title">
-          <span>Register New User</span>
-        </div>
-      </Link>
+    <div>
+      <div className="card">
+        <Link to="/users/register">
+          <UserAddOutlined className="icon" style={iconStyle} />
+          <div className="con-title">
+            <span>Register New User</span>
+          </div>
+        </Link>
+      </div>
+      <div className="user-list">
+        <Table
+          columns={columns}
+          dataSource={data}
+          pagination={{ pageSize: 5 }}
+        />
+      </div>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
+from course.models import Student
 
 
 class Author(serializers.ModelSerializer):
@@ -69,17 +70,25 @@ class BatchPostReplySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ['course', 'batch']
+        depth = 1
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     course = serializers.ChoiceField(source='detail.course.id', choices=list(
         map(lambda co: (co, co), Course.objects.all())))
     batch = serializers.ChoiceField(source='detail.batch.id', choices=list(
         map(lambda ba: (ba, ba), Batch.objects.all())))
+    detail = StudentSerializer(read_only=True)
 
     class Meta:
         model = User
         extra_kwargs = {'password': {'write_only': True}}
         fields = ['id', 'username', 'email',
-                  'password', 'is_staff', 'course', 'batch']
+                  'password', 'is_staff', 'course', 'batch', 'detail']
 
     def create(self, validated_data):
         print(validated_data)

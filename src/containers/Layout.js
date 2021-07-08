@@ -87,7 +87,7 @@ class CusLayout extends React.Component {
     let request = await axios.get("api/course/");
     if (request.status == 200) {
       // console.log(request.data.results);
-      callback(request.data.results);
+      callback(request.data);
     }
   };
 
@@ -95,7 +95,6 @@ class CusLayout extends React.Component {
     const { user } = this.context;
     const { collapsed } = this.state;
     const pathnames = this.props.pathname.split("/").filter((x) => x);
-    // console.log(user);
     return user && this.state.course ? (
       <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
         <Sider

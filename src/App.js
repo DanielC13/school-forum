@@ -20,10 +20,10 @@ function App() {
   const [user, setUser] = useState(null);
   const [allcourse, setAllCourse] = useState([]);
   const UserProviderValue = useMemo(() => ({ user, setUser }), [user, setUser]);
-  const CourseProviderValue = useMemo(() => ({ allcourse, setAllCourse }), [
-    allcourse,
-    setAllCourse,
-  ]);
+  const CourseProviderValue = useMemo(
+    () => ({ allcourse, setAllCourse }),
+    [allcourse, setAllCourse]
+  );
   const [cookies, setCookie, removeCookie] = useCookies(["token"]);
   let boo = () => {
     if (cookies.tkn) {
@@ -45,7 +45,7 @@ function App() {
           let userdetail = await axios.get("dj-rest-auth/user/");
           let allcourse = await axios.get("api/course/");
           setUser(userdetail.data);
-          setAllCourse(allcourse.data.results);
+          setAllCourse(allcourse.data);
           return true;
         }
         return false;
