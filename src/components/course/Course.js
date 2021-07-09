@@ -263,9 +263,6 @@ export const CoursePostAdd = (props) => {
   };
 
   const onFinish = (values) => {
-    console.log(course.id);
-    console.log(values);
-    console.log(user);
     const fd = new FormData();
     fd.append("title", values.title);
     fd.append("content", values.content);

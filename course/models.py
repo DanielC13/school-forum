@@ -27,7 +27,7 @@ class CoursePost(models.Model):
 
 class CoursePostFile(models.Model):
     post = models.ForeignKey(
-        CoursePost, on_delete=models.CASCADE, default=None, blank=True,related_name="coursefile")
+        CoursePost, on_delete=models.CASCADE, default=None, blank=True, related_name="coursefile")
     file = models.FileField(upload_to='coursepost_file/', null=True)
 
     def __str__(self):
@@ -76,11 +76,13 @@ class BatchPostReply(models.Model):
         return f"{self.post.batch.name} | {self.post.title} | {self.content} | {self.reply_by.username}"
 
 
-class Student(models.Model):
+class UserInfo(models.Model):
     user = models.OneToOneField(
         User, related_name='detail', on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    identity = models.CharField(max_length=30, choices=[(
+        'student', "Student"), ('teacher', 'Teacher'), ('admin', 'Admin')], default='student')
 
     def __str__(self):
         return f"{self.user.username} | {self.course.name} | {self.batch.name}"

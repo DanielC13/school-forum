@@ -7,22 +7,10 @@ import {
   CheckCircleTwoTone,
   CloseCircleTwoTone,
 } from "@ant-design/icons";
-import {
-  Form,
-  Input,
-  Cascader,
-  Select,
-  Row,
-  Col,
-  Checkbox,
-  Button,
-  AutoComplete,
-  Table,
-  Space,
-} from "antd";
-import axios from "axios";
-import { ApiUsers } from "../apiRequest";
+import { Form, Input, Select, Button, Table, Space, message } from "antd";
+import { ApiUsers, ApiCourse, testrequest } from "../apiRequest";
 import { CourseContext } from "../../AllContext";
+import axios from "axios";
 
 const { Option } = Select;
 
@@ -246,6 +234,7 @@ export const UserList = (props) => {
     {
       title: "Action",
       key: "action",
+      width: "5%",
       render: (text, record) => (
         <Space size="middle">
           <Link to={`/users/${record.id}`}>action</Link>
@@ -283,11 +272,55 @@ export const UserList = (props) => {
 };
 
 export const RegisterUser = (props) => {
-  useEffect(() => {}, []);
-  const onFinish = (values) => {
+  const { allcourse } = useContext(CourseContext);
+  const [batch, setBatch] = useState([]);
+  const [defaultbatch, setDefaultbatch] = useState("None");
+
+  const onFinish = async (values) => {
+    values.batch = defaultbatch;
     console.log("Received values of form: ", values);
-    ApiUsers(values);
+    let request = await ApiUsers("post", (res) => res, {
+      formdata: values,
+    });
+    if (request.status == 400) {
+      for (const key in request.data) {
+        if (Object.hasOwnProperty.call(request.data, key)) {
+          message.error(request.data[key]);
+        }
+      }
+    } else if (request.status == 201) {
+      alert("User created");
+      props.history.push("/users");
+    }
   };
+
+  const handleCourseChange = (value) => {
+    ApiCourse(
+      "get",
+      (res) => {
+        if (res.data instanceof Array) {
+          if (res.data.length !== 0) {
+            setDefaultbatch(res.data[0].id);
+          } else {
+            setDefaultbatch("None");
+          }
+          return setBatch(res.data);
+        }
+        setDefaultbatch("None");
+        return setBatch([]);
+      },
+      {
+        type: "batch",
+        courseId: value,
+      }
+    );
+  };
+
+  const onBatchChange = (value) => {
+    setDefaultbatch(value);
+    console.log(value);
+  };
+
   return (
     <div>
       <h2>
@@ -300,7 +333,7 @@ export const RegisterUser = (props) => {
         scrollToFirstError
       >
         <Form.Item
-          name="Username"
+          name="username"
           label="Username"
           rules={[
             {
@@ -368,19 +401,38 @@ export const RegisterUser = (props) => {
           <Input.Password visibilityToggle={false} />
         </Form.Item>
         <Form.Item name="course" label="Course">
-          <Select defaultValue="student">
-            <Option value="student">Student</Option>
+          <Select defaultValue="None" onChange={handleCourseChange}>
+            {allcourse.map((c) => (
+              <Option value={c.id}>{c.name}</Option>
+            ))}
+            <Option value="None">None</Option>
           </Select>
         </Form.Item>
         <Form.Item name="batch" label="Batch">
-          <Select defaultValue="student">
-            <Option value="student">Student</Option>
+          {/* weird bug I have to put this defaultbatch */}
+          <span style={{ display: "none" }}>{defaultbatch}</span>
+          <Select value={defaultbatch} onChange={onBatchChange}>
+            {batch.length !== 0 ? (
+              batch.map((b) => (
+                <Option key={b} value={b.id}>
+                  {b.name}
+                </Option>
+              ))
+            ) : (
+              <Option value="None">None</Option>
+            )}
           </Select>
         </Form.Item>
-        <Form.Item name="identity" label="Identity">
-          <Select defaultValue="student">
+        <Form.Item
+          name="identity"
+          label="Identity"
+          rules={[{ required: true, message: "Please select an Identity!" }]}
+        >
+          <Select defaultValue="">
+            <Option value="">-- Please Select One --</Option>
             <Option value="student">Student</Option>
             <Option value="teacher">Teacher</Option>
+            <Option value="admin">Admin</Option>
           </Select>
         </Form.Item>
 

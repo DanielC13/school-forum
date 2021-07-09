@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
-from course.models import Student
+from course.models import UserInfo
 
 
 class Author(serializers.ModelSerializer):
@@ -70,45 +70,66 @@ class BatchPostReplySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class StudentSerializer(serializers.ModelSerializer):
+class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Student
+        model = UserInfo
         fields = ['course', 'batch']
         depth = 1
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     course = serializers.ChoiceField(source='detail.course.id', choices=list(
-        map(lambda co: (co, co), Course.objects.all())))
+        map(lambda co: (co.id, co), Course.objects.all())))
     batch = serializers.ChoiceField(source='detail.batch.id', choices=list(
-        map(lambda ba: (ba, ba), Batch.objects.all())))
-    detail = StudentSerializer(read_only=True)
+        map(lambda ba: (ba.id, ba), Batch.objects.all())))
+    identity = serializers.ChoiceField(source='detail.identity', choices=[(
+        'student', 'student'), ('teacher', 'Teacher'), ('admin', 'Admin')])
+    detail = UserInfoSerializer(read_only=True)
 
     class Meta:
         model = User
         extra_kwargs = {'password': {'write_only': True}}
         fields = ['id', 'username', 'email',
-                  'password', 'is_staff', 'course', 'batch', 'detail']
+                  'password', 'is_staff', 'course', 'batch', 'identity', 'detail']
 
     def create(self, validated_data):
         print(validated_data)
         detail = validated_data.pop('detail')
         user = User.objects.create_user(validated_data.pop(
             'username'), validated_data.pop('email'), validated_data.pop('password'))
-        user.is_staff = validated_data.pop('is_staff')
+        if detail['identity'] == "admin":
+            user.is_staff = True
         user.save()
-        student = Student(user=user, course=detail.pop(
-            'course').pop('id'), batch=detail.pop('batch').pop('id'))
-        student.save()
+        userInfo = UserInfo(user=user, course=Course.objects.get(id=detail.pop(
+            'course').pop('id')), batch=Batch.objects.get(id=detail.pop('batch').pop('id')), identity=detail.pop('identity'))
+        userInfo.save()
         return user
 
     def update(self, instance, validated_data):
-        print(instance.detail)
         print(validated_data)
         detail = validated_data.pop('detail', None)
         for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        for attr, value in detail.items():
-            setattr(instance.detail, attr, value.pop('id'))
+            if attr == "username":
+                print('Cannot change username')
+            elif attr == "password":
+                print('Cannot change password')
+            else:
+                setattr(instance, attr, value)
+        if detail:
+            for attr, value in detail.items():
+                if attr == "identity" and value == "admin":
+                    instance.is_staff = True
+                else:
+                    instance.is_staff = False
+                if attr == "course":
+                    setattr(instance.detail, attr,
+                            Course.objects.get(id=value.pop('id')))
+                elif attr == "batch":
+                    setattr(instance.detail, attr,
+                            Batch.objects.get(id=value.pop('id')))
+                else:
+                    setattr(instance.detail, attr, value)
+                print(attr, value)
         instance.save()
+        instance.detail.save()
         return instance

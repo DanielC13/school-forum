@@ -9,7 +9,7 @@ from rest_framework.parsers import FileUploadParser
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.serializers import serialize
 from django.shortcuts import get_list_or_404
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 import ast
 from operator import itemgetter
 # Create your views here.
@@ -57,21 +57,22 @@ class CoursePostViewSet(viewsets.ModelViewSet):
 class BatchViewSet(viewsets.ModelViewSet):
     serializer_class = BatchSerializer
     permission_classes = [IsAdminCanEdit]
+    pagination_class = None
 
     def get_queryset(self):
         courseid = self.kwargs.get('courseid')
-        queryset = Batch.objects.filter(course_type=courseid)
-
+        try:
+            queryset = Batch.objects.filter(course_type=courseid)
+        except:
+            raise ValidationError("course id must be an integer")
+        print(queryset)
+        # if not queryset:
+        #     print('is empty!')
+        #     raise ValidationError("No batch was found")
         return queryset
 
     serializer_class = BatchSerializer
     permission_classes = [IsAdminUser]
-
-    def get_queryset(self):
-        courseid = self.kwargs.get('courseid')
-        queryset = Batch.objects.filter(course_type=courseid)
-
-        return queryset
 
 
 class BatchPostViewSet(viewsets.ModelViewSet):
