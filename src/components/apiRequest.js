@@ -4,11 +4,11 @@ export const ApiUsers = async (method, callback, args) => {
   if (!args) return console.log("requires object arguments");
   switch (method) {
     case "get":
-      console.log("GET method");
+      // console.log("GET method");
       axios.get(`api/register/`).then((res) => callback(res));
       break;
     case "post":
-      console.log("POST method");
+      // console.log("POST method");
       if (args.formdata) {
         let res = await axios
           .post("api/register/", args.formdata)
@@ -19,12 +19,45 @@ export const ApiUsers = async (method, callback, args) => {
         console.log('POST method requires "formdata" in object argument');
       }
       break;
+    case "retrieve":
+      // console.log("RETRIEVE method");
+      if (args.id) {
+        await axios
+          .get(`api/register/${args.id}/`)
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log('RETRIEVE method requires "id" in object argument');
+      }
+      break;
+    case "patch":
+      // console.log("PATCH method");
+      if (args.id && args.formdata) {
+        await axios
+          .patch(`api/register/${args.id}/`, args.formdata)
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'PATCH method requires "id" and "formdata" in object arguments'
+        );
+      }
+      break;
     case "delete":
       console.log("DELETE method");
-
+      if (args.id) {
+        await axios
+          .delete(`api/register/${args.id}/`)
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'DELETE method requires "id" in object arguments'
+        );
+      }
       break;
     default:
-      console.log("get, retrieve, post, put & delete method is available");
+      console.log("get, retrieve, post, patch & delete method is available");
   }
 };
 
@@ -32,7 +65,7 @@ export const ApiAnnouncement = (method, callback, args) => {
   if (!args) return console.log("requires object arguments");
   switch (method) {
     case "get":
-      console.log("GET method");
+      // console.log("GET method");
       if (args.page) {
         axios
           .get(`api/announcement/?page=${args.page}`)
@@ -52,7 +85,7 @@ export const ApiAnnouncement = (method, callback, args) => {
       }
       break;
     case "post":
-      console.log("POST method");
+      // console.log("POST method");
       if (args.formdata) {
         axios
           .put("api/announcement/", args.formdata, {
@@ -64,8 +97,8 @@ export const ApiAnnouncement = (method, callback, args) => {
       }
       break;
     case "put":
-      console.log("PUT method");
-      if (args.id) {
+      // console.log("PUT method");
+      if (args.id && args.formdata) {
         axios
           .put(`api/announcement/${args.id}/`, args.formdata, {
             headers: { "Content-Type": "multipart/form-data" },
@@ -75,11 +108,13 @@ export const ApiAnnouncement = (method, callback, args) => {
             return res.status;
           });
       } else {
-        console.log('PUT method requires "id" in object argument');
+        console.log(
+          'PUT method requires "id" and "formdata" in object argument'
+        );
       }
       break;
     case "delete":
-      console.log("DELETE method");
+      // console.log("DELETE method");
       if (args.id) {
         axios.delete(`api/announcement/${args.id}/`).then((res) => {
           if (res.status == 204) {

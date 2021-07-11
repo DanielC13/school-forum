@@ -7,7 +7,7 @@ import {
 } from "./containers/Login";
 import CusLayout from "./containers/Layout";
 import { HomePage } from "./components/home/Home";
-import { RegisterUser, UserList } from "./components/users/Users";
+import { RegisterUser, UserList, EditUser } from "./components/users/Users";
 import {
   Announcement,
   AnnouncementDetail,
@@ -39,6 +39,7 @@ const BaseRouter = (props) => {
               <Route exact path="/home" component={HomePage} />
               <Route exact path="/users" component={UserList} />
               <Route exact path="/users/register" component={RegisterUser} />
+              <Route exact path="/users/:id" component={EditUser} />
               <Route exact path="/announcement" component={Announcement} />
               <Route
                 exact

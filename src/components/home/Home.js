@@ -14,7 +14,7 @@ export const HomePage = (props) => {
       <div className="card">
         <Link to="/users">
           <UserOutlined className="icon" style={iconStyle} />
-          <div className="con-title">
+          <div className="con-title" style={{ textAlign: "center" }}>
             <span>List Of User</span>
           </div>
         </Link>

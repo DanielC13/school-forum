@@ -3,13 +3,27 @@ import { Link } from "react-router-dom";
 import Highlighter from "react-highlight-words";
 import {
   UserAddOutlined,
+  EditOutlined,
   SearchOutlined,
   CheckCircleTwoTone,
   CloseCircleTwoTone,
+  SaveTwoTone,
+  ExclamationCircleTwoTone,
 } from "@ant-design/icons";
-import { Form, Input, Select, Button, Table, Space, message } from "antd";
+import {
+  Form,
+  Input,
+  Select,
+  Button,
+  Table,
+  Space,
+  message,
+  Checkbox,
+  Modal,
+} from "antd";
 import { ApiUsers, ApiCourse, testrequest } from "../apiRequest";
 import { CourseContext } from "../../AllContext";
+import "./Users.css";
 import axios from "axios";
 
 const { Option } = Select;
@@ -162,7 +176,7 @@ export const UserList = (props) => {
       dataIndex: "id",
       key: "id",
       width: "10%",
-      ...getColumnSearchProps("age"),
+      ...getColumnSearchProps("id"),
       sorter: (a, b) => a.id - b.id,
       sortDirections: ["descend", "ascend"],
     },
@@ -184,27 +198,25 @@ export const UserList = (props) => {
       sorter: (a, b) => sortAlphabet(a.email, b.email),
     },
     {
-      title: "Admin",
-      dataIndex: "admin",
-      key: "admin",
+      title: "Identity",
+      dataIndex: "identity",
+      key: "identity",
       filters: [
         {
-          text: "Is admin",
-          value: true,
+          text: "Student",
+          value: "student",
         },
         {
-          text: "Not admin",
-          value: false,
+          text: "Teacher",
+          value: "teacher",
+        },
+        {
+          text: "Admin",
+          value: "admin",
         },
       ],
       align: "center",
-      onFilter: (value, record) => record.is_staff == value,
-      render: (text, record) =>
-        record.is_staff ? (
-          <CheckCircleTwoTone twoToneColor="#52c41a" />
-        ) : (
-          <CloseCircleTwoTone twoToneColor="#eb2f96" />
-        ),
+      onFilter: (value, record) => record.identity == value,
     },
     {
       title: "Course",
@@ -412,15 +424,13 @@ export const RegisterUser = (props) => {
           {/* weird bug I have to put this defaultbatch */}
           <span style={{ display: "none" }}>{defaultbatch}</span>
           <Select value={defaultbatch} onChange={onBatchChange}>
-            {batch.length !== 0 ? (
-              batch.map((b) => (
-                <Option key={b} value={b.id}>
-                  {b.name}
-                </Option>
-              ))
-            ) : (
-              <Option value="None">None</Option>
-            )}
+            {batch.length !== 0
+              ? batch.map((b) => (
+                  <Option key={b} value={b.id}>
+                    {b.name}
+                  </Option>
+                ))
+              : console.log("No batch found")}
           </Select>
         </Form.Item>
         <Form.Item
@@ -443,5 +453,263 @@ export const RegisterUser = (props) => {
         </Form.Item>
       </Form>
     </div>
+  );
+};
+
+export const EditUser = (props) => {
+  const { allcourse } = useContext(CourseContext);
+  const [batch, setBatch] = useState([]);
+  const [defaultbatch, setDefaultbatch] = useState("None");
+  const [userInfo, setUserInfo] = useState(null);
+  const [checkDel, setCheckDel] = useState(true);
+  const { confirm } = Modal;
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
+
+  const fetchUserInfo = async () => {
+    await ApiUsers(
+      "retrieve",
+      (res) => {
+        if (res.status == 200) {
+          setUserInfo(res.data);
+          ApiCourse(
+            "get",
+            (res2) => {
+              if (res2.data instanceof Array) {
+                if (res2.data.length !== 0) {
+                  setDefaultbatch(res.data.batch);
+                } else {
+                  setDefaultbatch("None");
+                }
+                return setBatch(res2.data);
+              }
+              setDefaultbatch("None");
+              return setBatch([]);
+            },
+            {
+              type: "batch",
+              courseId: res.data.course,
+            }
+          );
+        } else {
+          props.history.push("/users");
+        }
+      },
+      {
+        id: props.match.params.id,
+      }
+    );
+  };
+
+  const onFinish = (values) => {
+    values.batch = defaultbatch;
+    // console.log("Received values of form: ", values);
+    confirm({
+      title: "Save Changes",
+      icon: <SaveTwoTone />,
+      content: "Do you sure want to save the changes?",
+      okText: "Save",
+      okType: "primary",
+      cancelText: "Cancel",
+      async onOk() {
+        await ApiUsers(
+          "patch",
+          (res) => {
+            console.log(res);
+            if (res.status == 400) {
+              for (const key in res.data) {
+                if (Object.hasOwnProperty.call(res.data, key)) {
+                  message.error(res.data[key]);
+                }
+              }
+            } else if (res.status == 200) {
+              console.log("success");
+              props.history.push("/users");
+            }
+          },
+          {
+            id: props.match.params.id,
+            formdata: values,
+          }
+        );
+      },
+    });
+  };
+
+  const handleCourseChange = (value) => {
+    ApiCourse(
+      "get",
+      (res) => {
+        if (res.data instanceof Array) {
+          if (res.data.length !== 0) {
+            setDefaultbatch(res.data[0].id);
+          } else {
+            setDefaultbatch("None");
+          }
+          return setBatch(res.data);
+        }
+        setDefaultbatch("None");
+        return setBatch([]);
+      },
+      {
+        type: "batch",
+        courseId: value,
+      }
+    );
+  };
+
+  const onBatchChange = (value) => {
+    setDefaultbatch(value);
+    console.log(value);
+  };
+
+  const checkDelete = (e) => {
+    if (e.target.checked) return setCheckDel(false);
+    return setCheckDel(true);
+  };
+
+  const confirmDel = () => {
+    confirm({
+      title: "Delete this user",
+      icon: <ExclamationCircleTwoTone twoToneColor="#D1D621" />,
+      content:
+        "Warning: All of the post will be delete when the user has been deleted, the data can't be recover.",
+      okText: "Confirm",
+      okType: "primary",
+      okButtonProps: {
+        danger: true,
+        style: { backgroundColor: "red" },
+      },
+      cancelText: "Cancel",
+      async onOk() {
+        console.log("deleted");
+        await ApiUsers(
+          "delete",
+          (res) => {
+            if (res.status == 204) {
+              message.success("user has been deleted");
+              props.history.push("/users");
+            }
+          },
+          {
+            id: props.match.params.id,
+          }
+        );
+      },
+    });
+  };
+  return userInfo ? (
+    <div>
+      <h2>
+        Edit User Information <EditOutlined style={{ fontSize: "25px" }} />
+      </h2>
+      <Form
+        {...formItemLayout}
+        name="register"
+        onFinish={onFinish}
+        initialValues={userInfo}
+        scrollToFirstError
+      >
+        <Form.Item
+          name="username"
+          label="Username"
+          rules={[
+            {
+              required: true,
+              message: "Please input your Username!",
+              whitespace: false,
+            },
+          ]}
+        >
+          <Input disabled />
+        </Form.Item>
+        <Form.Item
+          name="email"
+          label="E-mail"
+          rules={[
+            {
+              type: "email",
+              message: "The input is not valid E-mail!",
+            },
+            {
+              required: true,
+              message: "Please input your E-mail!",
+            },
+          ]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item name="course" label="Course">
+          <Select onChange={handleCourseChange}>
+            {allcourse.map((c) => (
+              <Option value={c.id}>{c.name}</Option>
+            ))}
+            <Option value="None">None</Option>
+          </Select>
+        </Form.Item>
+        <Form.Item name="batch" label="Batch">
+          {/* weird bug I have to put this defaultbatch */}
+          <span style={{ display: "none" }}>{defaultbatch}</span>
+          <Select value={defaultbatch} onChange={onBatchChange}>
+            {batch.length !== 0
+              ? batch.map((b) => (
+                  <Option key={b} value={b.id}>
+                    {b.name}
+                  </Option>
+                ))
+              : console.log("No batch found")}
+          </Select>
+        </Form.Item>
+        <Form.Item
+          name="identity"
+          label="Identity"
+          rules={[{ required: true, message: "Please select an Identity!" }]}
+          style={{ marginBottom: "5px" }}
+        >
+          <Select defaultValue="">
+            <Option value="">-- Please Select One --</Option>
+            <Option value="student">Student</Option>
+            <Option value="teacher">Teacher</Option>
+            <Option value="admin">Admin</Option>
+          </Select>
+        </Form.Item>
+        <Form.Item
+          {...tailFormItemLayout}
+          className="input-checkbox"
+          style={{ marginBottom: "5px" }}
+        >
+          <Checkbox
+            style={{ color: "red", fontSize: "13px" }}
+            onChange={checkDelete}
+          >
+            I confirm want to DELETE this user
+          </Checkbox>
+        </Form.Item>
+        <Form.Item
+          {...tailFormItemLayout}
+          style={{ width: "66.5%", textAlign: "right" }}
+        >
+          <Button
+            type="primary"
+            htmlType="submit"
+            style={{ marginRight: "5px" }}
+          >
+            Save
+          </Button>
+          <Button
+            className="btn-delete"
+            htmlType="button"
+            onClick={confirmDel}
+            danger
+            disabled={checkDel}
+          >
+            Delete
+          </Button>
+        </Form.Item>
+      </Form>
+    </div>
+  ) : (
+    <p>loading</p>
   );
 };
