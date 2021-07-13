@@ -26,7 +26,7 @@ import { instanceOf } from "prop-types";
 import { withCookies, Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { UserContext } from "../AllContext";
+import { UserContext, CourseContext } from "../AllContext";
 import { FiLogOut } from "react-icons/fi";
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -49,7 +49,7 @@ class CusLayout extends React.Component {
     // console.log(this.state.theme, typeof this.state.theme);
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.fetchCourse((data) => this.setState({ course: data }));
   }
 
@@ -84,11 +84,7 @@ class CusLayout extends React.Component {
   };
 
   fetchCourse = async (callback) => {
-    let request = await axios.get("api/course/");
-    if (request.status == 200) {
-      // console.log(request.data.results);
-      callback(request.data);
-    }
+    await axios.get("api/course/").then((res) => callback(res.data));
   };
 
   render() {
@@ -96,63 +92,64 @@ class CusLayout extends React.Component {
     const { collapsed } = this.state;
     const pathnames = this.props.pathname.split("/").filter((x) => x);
     return user && this.state.course ? (
-      <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
-        <Sider
-          trigger={this.customTrigger()}
-          collapsible
-          collapsed={collapsed}
-          onCollapse={this.onCollapse}
-          style={{
-            overflow: "auto",
-            height: "100vh",
-            position: "fixed",
-            left: 0,
-            zIndex: 1,
-          }}
-          theme="light"
-        >
-          <div className="logo" />
-          <Menu
-            // defaultSelectedKeys={["1"]}
-            mode="inline"
-            // style={{
-            //   color:
-            //     this.state.theme == "light" ? "rgba(0,0,0,0.87)" : "#ECECEC",
-            //   backgroundColor:
-            //     this.state.theme == "light" ? "rgba(0,0,0,0.87)" : "#242424",
-            // }}
+      <CourseContext.Provider value={this.state.course}>
+        <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
+          <Sider
+            trigger={this.customTrigger()}
+            collapsible
+            collapsed={collapsed}
+            onCollapse={this.onCollapse}
+            style={{
+              overflow: "auto",
+              height: "100vh",
+              position: "fixed",
+              left: 0,
+              zIndex: 1,
+            }}
             theme="light"
           >
-            <Menu.Item
-              key="1"
-              className="nav-menu-item"
-              icon={<HomeOutlined />}
+            <div className="logo" />
+            <Menu
+              // defaultSelectedKeys={["1"]}
+              mode="inline"
+              // style={{
+              //   color:
+              //     this.state.theme == "light" ? "rgba(0,0,0,0.87)" : "#ECECEC",
+              //   backgroundColor:
+              //     this.state.theme == "light" ? "rgba(0,0,0,0.87)" : "#242424",
+              // }}
+              theme="light"
             >
-              <Link className="link" to="/home">
-                Home
-              </Link>
-            </Menu.Item>
-            <Menu.Item
-              key="2"
-              className="nav-menu-item"
-              icon={<NotificationOutlined />}
-            >
-              <Link className="link" to="/announcement">
-                Announcement
-              </Link>
-            </Menu.Item>
-            <Menu.Item
-              key="3"
-              className="nav-menu-item"
-              icon={<BookOutlined />}
-            >
-              <Link className="link" to="/course">
-                Course
-              </Link>
-            </Menu.Item>
-            {user.is_members.length ? (
-              <>
-                {/* <SubMenu
+              <Menu.Item
+                key="1"
+                className="nav-menu-item"
+                icon={<HomeOutlined />}
+              >
+                <Link className="link" to="/home">
+                  Home
+                </Link>
+              </Menu.Item>
+              <Menu.Item
+                key="2"
+                className="nav-menu-item"
+                icon={<NotificationOutlined />}
+              >
+                <Link className="link" to="/announcement">
+                  Announcement
+                </Link>
+              </Menu.Item>
+              <Menu.Item
+                key="3"
+                className="nav-menu-item"
+                icon={<BookOutlined />}
+              >
+                <Link className="link" to="/course">
+                  Course
+                </Link>
+              </Menu.Item>
+              {user.is_members.length ? (
+                <>
+                  {/* <SubMenu
                 key="sub1"
                 icon={<TeamOutlined />}
                 title="Group"
@@ -164,6 +161,17 @@ class CusLayout extends React.Component {
                   </Menu.Item>
                 ))}
               </SubMenu> */}
+                  <Menu.Item
+                    key="4"
+                    className="nav-menu-item"
+                    icon={<TeamOutlined />}
+                  >
+                    <Link className="link" to="/group">
+                      Group
+                    </Link>
+                  </Menu.Item>
+                </>
+              ) : (
                 <Menu.Item
                   key="4"
                   className="nav-menu-item"
@@ -173,133 +181,124 @@ class CusLayout extends React.Component {
                     Group
                   </Link>
                 </Menu.Item>
-              </>
-            ) : (
-              <Menu.Item
-                key="4"
-                className="nav-menu-item"
-                icon={<TeamOutlined />}
-              >
-                <Link className="link" to="/group">
-                  Group
-                </Link>
-              </Menu.Item>
-            )}
-          </Menu>
-        </Sider>
-        <Layout
-          className="site-layout"
-          style={{
-            marginLeft: collapsed ? 80 : 200,
-            zIndex: 0,
-            transition: ".2s",
-          }}
-        >
-          <PageHeader
-            className="site-layout-background"
+              )}
+            </Menu>
+          </Sider>
+          <Layout
+            className="site-layout"
             style={{
-              padding: "10px",
-              // backgroundColor: "#002140",
-              position: "fixed",
-              width: "100%",
-              left: "0",
-              zIndex: "1",
-            }}
-            extra={[
-              <Popconfirm
-                placement="bottomRight"
-                title="You about to logout, are you sure?"
-                onConfirm={this.logout}
-                okText="Yes"
-                cancelText="No"
-                icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-              >
-                <Button key="1" type="primary">
-                  <FiLogOut
-                    style={{
-                      position: "relative",
-                      top: "3px",
-                      marginRight: "3px",
-                    }}
-                  />
-                  {user.username}
-                </Button>
-              </Popconfirm>,
-            ]}
-          ></PageHeader>
-          <Content
-            style={{
-              marginTop: "60px",
-              zIndex: "0",
-              backgroundColor: "#EAEAEA",
+              marginLeft: collapsed ? 80 : 200,
+              zIndex: 0,
+              transition: ".2s",
             }}
           >
-            <div>
-              <Breadcrumb
-                style={{
-                  margin: "15px 0 0 25px",
-                  position: "relative",
-                  top: "5px",
-                }}
-              >
-                {pathnames.map((x, i) => {
-                  let path = `/${pathnames.slice(0, i + 1).join("/")}`;
-                  {
-                    /* console.log(path, pathnames); */
-                  }
-                  if (pathnames[0] == "course" && pathnames.length > 1) {
+            <PageHeader
+              className="site-layout-background"
+              style={{
+                padding: "10px",
+                // backgroundColor: "#002140",
+                position: "fixed",
+                width: "100%",
+                left: "0",
+                zIndex: "1",
+              }}
+              extra={[
+                <Popconfirm
+                  placement="bottomRight"
+                  title="You about to logout, are you sure?"
+                  onConfirm={this.logout}
+                  okText="Yes"
+                  cancelText="No"
+                  icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+                >
+                  <Button key="1" type="primary">
+                    <FiLogOut
+                      style={{
+                        position: "relative",
+                        top: "3px",
+                        marginRight: "3px",
+                      }}
+                    />
+                    {user.username}
+                  </Button>
+                </Popconfirm>,
+              ]}
+            ></PageHeader>
+            <Content
+              style={{
+                marginTop: "60px",
+                zIndex: "0",
+                backgroundColor: "#EAEAEA",
+              }}
+            >
+              <div>
+                <Breadcrumb
+                  style={{
+                    margin: "15px 0 0 25px",
+                    position: "relative",
+                    top: "5px",
+                  }}
+                >
+                  {pathnames.map((x, i) => {
+                    let path = `/${pathnames.slice(0, i + 1).join("/")}`;
                     {
-                      /* console.log(
+                      /* console.log(path, pathnames); */
+                    }
+                    if (pathnames[0] == "course" && pathnames.length > 1) {
+                      {
+                        /* console.log(
                       this.state.course.find((e) => e.name == pathnames[1])
                     ); */
+                      }
+                      return (
+                        <Breadcrumb.Item>
+                          <Link
+                            to={{
+                              pathname: path,
+                              state: {
+                                course: this.state.course.find(
+                                  (e) => e.name == pathnames[1]
+                                ),
+                              },
+                            }}
+                          >
+                            {x}
+                          </Link>
+                        </Breadcrumb.Item>
+                      );
                     }
                     return (
                       <Breadcrumb.Item>
-                        <Link
-                          to={{
-                            pathname: path,
-                            state: {
-                              course: this.state.course.find(
-                                (e) => e.name == pathnames[1]
-                              ),
-                            },
-                          }}
-                        >
+                        <Link onClick={() => this.props.history.push(path)}>
                           {x}
                         </Link>
                       </Breadcrumb.Item>
                     );
-                  }
-                  return (
-                    <Breadcrumb.Item>
-                      <Link onClick={() => this.props.history.push(path)}>
-                        {x}
-                      </Link>
-                    </Breadcrumb.Item>
-                  );
-                })}
-              </Breadcrumb>
-            </div>
-            <div
+                  })}
+                </Breadcrumb>
+              </div>
+              <div
+                style={{
+                  margin: "30px",
+                  padding: "30px",
+                  backgroundColor: "white",
+                  minHeight: "60vh",
+                }}
+              >
+                {this.props.children}
+              </div>
+            </Content>
+            <Footer
+              id="footer"
               style={{
-                margin: "30px",
-                padding: "30px",
-                backgroundColor: "white",
-                minHeight: "60vh",
+                textAlign: "center",
               }}
             >
-              {this.props.children}
-            </div>
-          </Content>
-          <Footer
-            style={{
-              textAlign: "center",
-            }}
-          >
-            Ant Design ©2018 Created by Ant UED
-          </Footer>
+              Ant Design ©2018 Created by Ant UED
+            </Footer>
+          </Layout>
         </Layout>
-      </Layout>
+      </CourseContext.Provider>
     ) : (
       <span></span>
     );

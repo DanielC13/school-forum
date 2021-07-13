@@ -77,7 +77,7 @@ class BatchViewSet(viewsets.ModelViewSet):
 
 class BatchPostViewSet(viewsets.ModelViewSet):
     serializer_class = BatchPostSerializer
-    permission_classes = [IsThisBatch]
+    permission_classes = [IsAuthenticated, IsThisBatch]
 
     def get_queryset(self):
         courseid, batchid = itemgetter('courseid', 'batchid')(self.kwargs)

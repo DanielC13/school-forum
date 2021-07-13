@@ -51,9 +51,7 @@ export const ApiUsers = async (method, callback, args) => {
           .then((res) => callback(res))
           .catch((error) => callback(error.response));
       } else {
-        console.log(
-          'DELETE method requires "id" in object arguments'
-        );
+        console.log('DELETE method requires "id" in object arguments');
       }
       break;
     default:
@@ -71,7 +69,7 @@ export const ApiAnnouncement = (method, callback, args) => {
           .get(`api/announcement/?page=${args.page}`)
           .then((res) => callback(res));
       } else {
-        console.log('POST method requires "page" in object argument ');
+        console.log('GET method requires "page" in object argument ');
       }
       break;
     case "retrieve":
@@ -134,26 +132,43 @@ export const ApiAnnouncement = (method, callback, args) => {
   }
 };
 
-export const ApiCourse = (method, callback, args) => {
+export const ApiCourse = async (method, callback, args) => {
   if (!args) return console.log("requires object arguments");
   switch (method) {
     case "get":
       // console.log("GET method");
-      if (args.type == "posts") {
-        return;
-      } else if (args.type == "detail") {
-        return;
-      } else if (args.type == "batch") {
-        if (!args.courseId)
-          return console.log(
-            '"batch" type requires "courseId" in object argument'
-          );
-        axios
-          .get(`http://127.0.0.1:8000/api/course/${args.courseId}/batch/`)
-          .then((res) => {
-            callback(res);
-          });
-        return;
+      if (args.type) {
+        switch (args.type) {
+          case "posts":
+            if (args.page && args.courseId) {
+              await axios
+                .get(`api/course/${args.courseId}/posts/?page=${args.page}`)
+                .then((res) => callback(res))
+                .catch((error) => callback(error.response));
+            } else {
+              console.log(
+                'GET method with type "posts" requires "page" and "courseId" in object argument '
+              );
+            }
+            break;
+          case "detail":
+            break;
+          case "batch":
+            if (!args.courseId)
+              return console.log(
+                '"batch" type requires "courseId" in object argument'
+              );
+            await axios
+              .get(`http://127.0.0.1:8000/api/course/${args.courseId}/batch/`)
+              .then((res) => {
+                callback(res);
+              })
+              .catch((error) => callback(error.response));
+            break;
+          default:
+            console.log("this type is not available");
+            break;
+        }
       } else {
         console.log(
           'GET method requires "type" in object argument, there is 2 available types ["posts","detail","batch"]'
@@ -173,12 +188,22 @@ export const ApiCourse = (method, callback, args) => {
   return;
 };
 
-export const ApiBatch = (method, callback, args) => {
+export const ApiBatch = async (method, callback, args) => {
   if (!args) return console.log("requires object arguments");
   switch (method) {
     case "get":
       console.log("GET method");
       if (args.type == "posts") {
+        if (args.batchId && args.courseId) {
+          await axios
+            .get(`api/course/${args.courseId}/batch/${args.batchId}/posts/`)
+            .then((res) => callback(res))
+            .catch((error) => callback(error.response));
+        } else {
+          console.log(
+            'GET method with type "posts" requires "batchId" and "courseId" in object argument '
+          );
+        }
         return;
       } else if (args.type == "detail") {
         return;

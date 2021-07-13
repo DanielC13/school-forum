@@ -33,6 +33,7 @@ import axios from "axios";
 import { UserContext, CourseContext } from "../../AllContext";
 import InfiniteScroll from "react-infinite-scroller";
 import { convertUTC, fileType, fileName } from "../tools";
+import { ApiCourse } from "../apiRequest";
 
 const { Meta } = Card;
 
@@ -102,9 +103,9 @@ export const Course = (props) => {
           onClick={() =>
             props.history.push({
               pathname: `course/${course.name}`,
-              state: {
-                course: course,
-              },
+              // state: {
+              //   course: course,
+              // },
             })
           }
         >
@@ -124,14 +125,21 @@ export const CoursePost = (props) => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasmore] = useState(true);
+  const [batch, setBatch] = useState([]);
   const { user } = useContext(UserContext);
-  const { allcourse } = useContext(CourseContext);
+  const allcourse = useContext(CourseContext);
+  let findcourse = allcourse.find((e) => e.name == props.match.params.course);
 
   useEffect(() => {
+    if (!findcourse) {
+      message.error(`"${props.match.params.course}" Course was not found!`);
+      return props.history.push("/course");
+    }
     fetchData((res) => {
       setStatus(res);
       setData(res.results);
     });
+    fetchBatch((res) => setBatch(res.data));
   }, []);
 
   const IconText = ({ icon, text }) => (
@@ -141,17 +149,24 @@ export const CoursePost = (props) => {
     </Space>
   );
 
-  const fetchData = async (callback) => {
-    // let course = await axios.get("api/course/").then((e) => e.data.results);
-    let findcourse = allcourse.find((e) => e.name == props.match.params.course);
-    if (findcourse) {
-      axios
-        .get(`api/course/${findcourse.id}/posts/?page=${page}`)
-        .then((res) => callback(res.data));
-      setPage(page + 1);
-    } else {
-      props.history.push("/course");
-    }
+  const fetchData = (callback) => {
+    ApiCourse(
+      "get",
+      (res) => (res.status == 200 ? callback(res.data) : console.log(res)),
+      {
+        type: "posts",
+        courseId: findcourse.id,
+        page: page,
+      }
+    );
+    setPage(page + 1);
+  };
+
+  const fetchBatch = (callback) => {
+    ApiCourse("get", (res) => callback(res), {
+      type: "batch",
+      courseId: findcourse.id,
+    });
   };
 
   const handleInfiniteOnLoad = () => {
@@ -170,23 +185,21 @@ export const CoursePost = (props) => {
       setLoading(false);
     });
   };
-  // console.log(page);
+
   return (
     <div>
       <div
         style={{
           float: "right",
           position: "relative",
-          top: "-100px",
+          top: "-80px",
         }}
       >
-        {user.is_staff ? (
+        {user.is_staff || user.identity == "teacher" ? (
           <Button
             type="primary"
             onClick={() =>
-              props.history.push(
-                `/course/${props.location.state.course.name}/add`
-              )
+              props.history.push(`/course/${props.match.params.course}/add`)
             }
           >
             + New Course Post
@@ -195,7 +208,26 @@ export const CoursePost = (props) => {
           <span></span>
         )}
       </div>
+      <div>
+        <h2>Batches</h2>
+        <div style={{ display: "flex" }}>
+          {batch.map((e) => (
+            <Card style={{ width: 200, margin: "10px" }} hoverable={true}>
+              <Meta
+                title={e.name}
+                description={`level ${e.level}`}
+                onClick={() =>
+                  props.history.push(
+                    `${props.match.params.course}/batch/${e.id}`
+                  )
+                }
+              />
+            </Card>
+          ))}
+        </div>
+      </div>
       <div className="demo-infinite-container">
+        <h2>{props.match.params.course} Posts</h2>
         <InfiniteScroll
           initialLoad={false}
           pageStart={0}
@@ -236,18 +268,15 @@ export const CoursePost = (props) => {
 
 export const CoursePostAdd = (props) => {
   const { user } = useContext(UserContext);
-  const [course, setCourse] = useState({});
+  const allcourse = useContext(CourseContext);
+  let findcourse = allcourse.find((e) => e.name == props.match.params.course);
 
   useEffect(() => {
-    fetchCourse();
+    if (!findcourse) {
+      message.error(`"${props.match.params.course}" Course was not found!`);
+      return props.history.push("/course");
+    }
   }, []);
-
-  const fetchCourse = async () => {
-    let course = await axios.get("api/course/").then((e) => e.data);
-    let findcourse = course.find((e) => e.name == props.match.params.course);
-    console.log(findcourse);
-    findcourse ? setCourse(findcourse) : props.history.push("/course");
-  };
 
   const normFile = (e) => {
     console.log("Upload event:", e);
@@ -272,10 +301,10 @@ export const CoursePostAdd = (props) => {
       }
     }
     axios
-      .put(`api/course/${course.id}/posts/`, fd, {
+      .put(`api/course/${findcourse.id}/posts/`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       })
-      .then((res) => props.history.push(`/course/${course.name}`));
+      .then((res) => props.history.push(`/course/${findcourse.name}`));
   };
 
   return (
@@ -320,12 +349,10 @@ export const CoursePostDetail = (props) => {
   const [item, setItem] = useState([]);
   const [error, setError] = useState(false);
   const { user } = useContext(UserContext);
+  const allcourse = useContext(CourseContext);
+  let findcourse = allcourse.find((e) => e.name == props.match.params.course);
 
   const fetchData = async (callback) => {
-    let course = await axios.get("api/course/").then((e) => e.data);
-    let findcourse = await course.find(
-      (e) => e.name == props.match.params.course
-    );
     try {
       let response = await axios
         .get(`api/course/${findcourse.id}/posts/${props.match.params.id}/`)
@@ -343,6 +370,10 @@ export const CoursePostDetail = (props) => {
   };
 
   useEffect(() => {
+    if (!findcourse) {
+      message.error(`"${props.match.params.course}" Course was not found!`);
+      return props.history.push("/course");
+    }
     fetchData((res) => setItem(res.data));
   }, []);
 

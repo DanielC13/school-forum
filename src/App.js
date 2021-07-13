@@ -20,10 +20,6 @@ function App() {
   const [user, setUser] = useState(null);
   const [allcourse, setAllCourse] = useState([]);
   const UserProviderValue = useMemo(() => ({ user, setUser }), [user, setUser]);
-  const CourseProviderValue = useMemo(
-    () => ({ allcourse, setAllCourse }),
-    [allcourse, setAllCourse]
-  );
   const [cookies, setCookie, removeCookie] = useCookies(["token"]);
   let boo = () => {
     if (cookies.tkn) {
@@ -43,9 +39,7 @@ function App() {
         if (stat == 200) {
           console.log(stat);
           let userdetail = await axios.get("dj-rest-auth/user/");
-          let allcourse = await axios.get("api/course/");
           setUser(userdetail.data);
-          setAllCourse(allcourse.data);
           return true;
         }
         return false;
@@ -79,15 +73,13 @@ function App() {
       ></link>
       <CookiesProvider>
         <UserContext.Provider value={UserProviderValue}>
-          <CourseContext.Provider value={CourseProviderValue}>
-            <BrowserRouter>
-              <BaseRouter
-                href="this.props.href"
-                verify={verification}
-                user={user}
-              ></BaseRouter>
-            </BrowserRouter>
-          </CourseContext.Provider>
+          <BrowserRouter>
+            <BaseRouter
+              href="this.props.href"
+              verify={verification}
+              user={user}
+            ></BaseRouter>
+          </BrowserRouter>
         </UserContext.Provider>
       </CookiesProvider>
     </div>

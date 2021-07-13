@@ -63,7 +63,7 @@ export const UserList = (props) => {
   const [searchTxt, setSearchTxt] = useState("");
   const [searchedCol, setSearchedCol] = useState("");
   const [data, setData] = useState([]);
-  const { allcourse } = useContext(CourseContext);
+  const allcourse = useContext(CourseContext);
   let searchInput = null;
   let iconStyle = {
     fontSize: "30px",
@@ -284,7 +284,7 @@ export const UserList = (props) => {
 };
 
 export const RegisterUser = (props) => {
-  const { allcourse } = useContext(CourseContext);
+  const allcourse = useContext(CourseContext);
   const [batch, setBatch] = useState([]);
   const [defaultbatch, setDefaultbatch] = useState("None");
 
@@ -457,7 +457,7 @@ export const RegisterUser = (props) => {
 };
 
 export const EditUser = (props) => {
-  const { allcourse } = useContext(CourseContext);
+  const allcourse = useContext(CourseContext);
   const [batch, setBatch] = useState([]);
   const [defaultbatch, setDefaultbatch] = useState("None");
   const [userInfo, setUserInfo] = useState(null);

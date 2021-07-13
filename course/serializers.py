@@ -53,6 +53,7 @@ class BatchSerializer(serializers.ModelSerializer):
 
 
 class BatchPostSerializer(serializers.ModelSerializer):
+    author = Author(read_only=True)
     class Meta:
         model = BatchPost
         fields = '__all__'
