@@ -74,14 +74,14 @@ class IsThisCourse(permissions.BasePermission):
         if view.action in ['create']:
             return detail.course.id == int(request.parser_context['kwargs']['courseid'])
         # print(detail.course.id,int(request.parser_context['kwargs']['courseid']))
-        return detail.course.id == int(request.parser_context['kwargs']['courseid'])
+        return True
 
     def has_object_permission(self, request, view, obj):
         detail = request.user.detail
         if view.action in ['retrieve']:
             return True
-        if view.action in ['update', 'partial_update', 'destroy'] and detail.course == obj.course:
-            return obj.author == request.user and obj.status == "pending" or request.user.is_staff
+        if view.action in ['update', 'partial_update', 'destroy']:
+            return obj.author == request.user and detail.course == obj.course or detail.identity == "teacher" and detail.course == obj.course or request.user.is_staff
         return False
 
 
@@ -89,12 +89,16 @@ class IsThisCourse(permissions.BasePermission):
 class IsThisBatch(permissions.BasePermission):
     def has_permission(self, request, view):
         detail = request.user.detail
+        if request.method == "POST":
+            return False
         return detail.batch.id == int(request.parser_context['kwargs']['batchid']) and detail.course.id == int(request.parser_context['kwargs']['courseid']) or request.user.is_staff
 
     def has_object_permission(self, request, view, obj):
         detail = request.user.detail
-        if view.action in ['retrieve', 'update', 'partial_update', 'destroy'] and detail.batch == obj.batch:
-            return obj.author == request.user
+        if view.action in ['retrieve']:
+            return True
+        if view.action in ['update', 'partial_update', 'destroy'] and detail.batch == obj.batch or request.user.is_staff:
+            return obj.author == request.user or detail.identity == "teacher" or request.user.is_staff
         return False
 
 

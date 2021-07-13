@@ -301,7 +301,7 @@ export const RegisterUser = (props) => {
         }
       }
     } else if (request.status == 201) {
-      alert("User created");
+      message.success("User created");
       props.history.push("/users");
     }
   };

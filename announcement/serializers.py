@@ -44,6 +44,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         return post
 
     def update(self, instance, validated_data):
+        print(validated_data)
         files = validated_data.pop('announcefile').getlist('announcefile')
         deletefiles = validated_data.pop('deletefile').split(',')
         instance.title = validated_data.get('title', instance.title)

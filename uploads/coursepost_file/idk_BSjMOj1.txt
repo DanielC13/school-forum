@@ -1,0 +1,1 @@
+thank you my teammate khoo zhoung xyu to past the rest of presentation to me.In our school forum flow chart,user must be login first before using the system,user function and userbility are different depending on their identity,the first identity in our system is Teacher,teacher can ..., the second identity is student,lastly is admin  

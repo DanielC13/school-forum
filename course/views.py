@@ -24,12 +24,12 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 class CoursePostViewSet(viewsets.ModelViewSet):
     serializer_class = CoursePostSerializer
-    permission_classes = [IsThisCourse]
+    permission_classes = [IsAuthenticated, IsThisCourse]
 
     def get_queryset(self):
         courseid = self.kwargs.get('courseid')
         queryset = CoursePost.objects.filter(
-            course=courseid).order_by('-date_posted')
+            course=courseid).order_by("-date_posted")
         return queryset
 
     def put(self, request, **kwargs):
@@ -44,14 +44,14 @@ class CoursePostViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         print(serializer.errors)
 
-    serializer_class = CoursePostSerializer
-    permission_classes = [IsAdminUser]
-
-    def get_queryset(self):
-        # print(self.request.Files)
-        courseid = self.kwargs.get('courseid')
-        queryset = CoursePost.objects.filter(course=courseid)
-        return queryset
+    def update(self, request, pk, **kwargs):
+        serializer = self.serializer_class(
+            CoursePost.objects.get(pk=pk), data=request.data)
+        if serializer.is_valid():
+            serializer.validated_data['coursefile'] = request.FILES
+            serializer.validated_data['deletefile'] = request.data['deletefile']
+            serializer.save()
+            return Response(serializer.data)
 
 
 class BatchViewSet(viewsets.ModelViewSet):
@@ -71,9 +71,6 @@ class BatchViewSet(viewsets.ModelViewSet):
         #     raise ValidationError("No batch was found")
         return queryset
 
-    serializer_class = BatchSerializer
-    permission_classes = [IsAdminUser]
-
 
 class BatchPostViewSet(viewsets.ModelViewSet):
     serializer_class = BatchPostSerializer
@@ -82,8 +79,21 @@ class BatchPostViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         courseid, batchid = itemgetter('courseid', 'batchid')(self.kwargs)
         queryset = BatchPost.objects.filter(
-            batch=batchid, batch__course_type_id=courseid)
+            batch=batchid, batch__course_type_id=courseid).order_by('-date_posted')
         return queryset
+
+    def put(self, request, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        print(request.data)
+        print(serializer.is_valid())
+        if serializer.is_valid():
+            serializer.validated_data['author'] = request.user
+            serializer.validated_data['batch'] = Batch.objects.get(
+                pk=kwargs.get('batchid'))
+            serializer.validated_data['batchfile'] = request.FILES
+            serializer.save()
+            return Response(serializer.data)
+        print(serializer.errors)
 
 
 class BatchPostReplyViewSet(viewsets.ModelViewSet):

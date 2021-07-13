@@ -21,7 +21,7 @@ import {
   CoursePostDetail,
   CoursePostEdit,
 } from "./components/course/Course";
-import { BatchPost } from "./components/batch/Batch";
+import { BatchPost, BatchPostAdd } from "./components/batch/Batch";
 import { Group, GroupPost } from "./components/group/Group";
 
 const BaseRouter = (props) => {
@@ -83,6 +83,11 @@ const BaseRouter = (props) => {
                 exact
                 path="/course/:course/batch/:batch"
                 component={BatchPost}
+              />
+              <Route
+                exact
+                path="/course/:course/batch/:batch/add"
+                component={BatchPostAdd}
               />
               <Route exact path="/group" component={Group} />
               <Route exact path="/group/:id" component={GroupPost} />

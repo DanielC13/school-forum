@@ -171,16 +171,65 @@ export const ApiCourse = async (method, callback, args) => {
         }
       } else {
         console.log(
-          'GET method requires "type" in object argument, there is 2 available types ["posts","detail","batch"]'
+          'GET method requires "type" in object argument, there are 2 available types ["posts","detail","batch"]'
         );
       }
       break;
     case "post":
-      console.log("POST method");
+      // console.log("POST method");
+      if (args.courseId && args.formdata) {
+        await axios
+          .put(`api/course/${args.courseId}/posts/`, args.formdata, {
+            headers: { "Content-Type": "multipart/form-data" },
+          })
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'POST method requires "courseId" and "formdata" in object argument'
+        );
+      }
+      break;
+    case "retrieve":
+      // console.log("RETRIEVE method");
+      if (args.courseId && args.id) {
+        await axios
+          .get(`api/course/${args.courseId}/posts/${args.id}/`)
+          .then((res) => {
+            callback(res);
+          })
+          .catch((error) => callback(error.response));
+      }
+      break;
+    case "put":
+      console.log("PUT method");
+      if (args.courseId && args.id && args.formdata) {
+        await axios
+          .put(`api/course/${args.courseId}/posts/${args.id}/`, args.formdata, {
+            headers: { "Content-Type": "multipart/form-data" },
+          })
+          .then((res) => {
+            callback(res);
+          })
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'PUT method requires "id", "couresId" and "formdata" in object argument'
+        );
+      }
       break;
     case "delete":
-      console.log("DELETE method");
-
+      // console.log("DELETE method");
+      if (args.courseId && args.id) {
+        await axios
+          .delete(`api/course/${args.courseId}/posts/${args.id}/`)
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'DELETE method requires "courseId" and "id" in object argument'
+        );
+      }
       break;
     default:
       console.log("get, retrieve, post, put & delete method is available");
@@ -190,13 +239,14 @@ export const ApiCourse = async (method, callback, args) => {
 
 export const ApiBatch = async (method, callback, args) => {
   if (!args) return console.log("requires object arguments");
+  let { type = null, batchId = null, courseId = null, formdata = null } = args;
   switch (method) {
     case "get":
-      console.log("GET method");
-      if (args.type == "posts") {
-        if (args.batchId && args.courseId) {
+      // console.log("GET method");
+      if (type == "posts") {
+        if (batchId && courseId) {
           await axios
-            .get(`api/course/${args.courseId}/batch/${args.batchId}/posts/`)
+            .get(`api/course/${courseId}/batch/${batchId}/posts/`)
             .then((res) => callback(res))
             .catch((error) => callback(error.response));
         } else {
@@ -205,7 +255,7 @@ export const ApiBatch = async (method, callback, args) => {
           );
         }
         return;
-      } else if (args.type == "detail") {
+      } else if (type == "detail") {
         return;
       } else {
         console.log(
@@ -214,7 +264,19 @@ export const ApiBatch = async (method, callback, args) => {
       }
       break;
     case "post":
-      console.log("POST method");
+      // console.log("POST method");
+      if (courseId && batchId) {
+        await axios
+          .put(`api/course/${courseId}/batch/${batchId}/posts/`, formdata, {
+            headers: { "Content-Type": "multipart/form-data" },
+          })
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'POST method requires "batchId" and "courseId" in object argument'
+        );
+      }
       break;
     case "delete":
       console.log("DELETE method");

@@ -10,6 +10,7 @@ import {
   Upload,
   Popconfirm,
   Card,
+  Modal,
 } from "antd";
 import {
   LoadingOutlined,
@@ -26,6 +27,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
+  SaveTwoTone,
 } from "@ant-design/icons";
 import "./Course.css";
 import Loading from "../Loading";
@@ -36,6 +38,7 @@ import { convertUTC, fileType, fileName } from "../tools";
 import { ApiCourse } from "../apiRequest";
 
 const { Meta } = Card;
+const { confirm: cusConfirm } = Modal;
 
 const handleIconRender = (file, listType) => {
   const fileSufIconList = [
@@ -210,7 +213,7 @@ export const CoursePost = (props) => {
       </div>
       <div>
         <h2>Batches</h2>
-        <div style={{ display: "flex" }}>
+        <div style={{ display: "flex", flexWrap: "wrap" }}>
           {batch.map((e) => (
             <Card style={{ width: 200, margin: "10px" }} hoverable={true}>
               <Meta
@@ -300,11 +303,24 @@ export const CoursePostAdd = (props) => {
         fd.append("coursefile", values.upload[i].originFileObj);
       }
     }
-    axios
-      .put(`api/course/${findcourse.id}/posts/`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((res) => props.history.push(`/course/${findcourse.name}`));
+    ApiCourse(
+      "post",
+      (res) => {
+        if (res.status == 400) {
+          for (const key in res.data) {
+            if (Object.hasOwnProperty.call(res.data, key)) {
+              message.error(res.data[key]);
+            }
+          }
+        } else if (res.status == 200) {
+          message.success("Post has been created!");
+          props.history.push(`/course/${props.match.params.course}`);
+        } else {
+          console.log(res);
+        }
+      },
+      { courseId: findcourse.id, formdata: fd }
+    );
   };
 
   return (
@@ -347,28 +363,29 @@ export const CoursePostAdd = (props) => {
 
 export const CoursePostDetail = (props) => {
   const [item, setItem] = useState([]);
-  const [error, setError] = useState(false);
   const { user } = useContext(UserContext);
   const allcourse = useContext(CourseContext);
   let findcourse = allcourse.find((e) => e.name == props.match.params.course);
 
-  const fetchData = async (callback) => {
-    try {
-      let response = await axios
-        .get(`api/course/${findcourse.id}/posts/${props.match.params.id}/`)
-        .then((res) => {
+  const fetchData = (callback) => {
+    ApiCourse(
+      "retrieve",
+      (res) => {
+        if (res.status == 200) {
           callback(res);
-          console.log(res);
-          return res.status;
-        });
-      return response;
-    } catch (error) {
-      console.log(error);
-      setError(true);
-    }
-    // props.history.push("/course");
+        } else if (res.status == 404) {
+          message.error("Post Not Found!");
+          props.history.push(`/course/${props.match.params.course}`);
+        } else {
+          message.error(res.data.detail);
+        }
+      },
+      {
+        courseId: findcourse.id,
+        id: props.match.params.id,
+      }
+    );
   };
-
   useEffect(() => {
     if (!findcourse) {
       message.error(`"${props.match.params.course}" Course was not found!`);
@@ -377,25 +394,25 @@ export const CoursePostDetail = (props) => {
     fetchData((res) => setItem(res.data));
   }, []);
 
-  const deletepost = async () => {
-    let request = await axios.delete(
-      `api/announcement/${props.match.params.id}/`
+  const deletepost = () => {
+    ApiCourse(
+      "delete",
+      (res) => {
+        if (res.status == 204) {
+          message.success("post has been deleted");
+          props.history.push(`/course/${props.match.params.course}`);
+        } else {
+          console.log(res);
+        }
+      },
+      {
+        courseId: findcourse.id,
+        id: props.match.params.id,
+      }
     );
-    let status = await request.status;
-    if (status == 204) {
-      props.history.push({
-        pathname: "/announcement",
-        state: {
-          delete_successful: true,
-        },
-      });
-    } else {
-      console.log(request);
-    }
   };
 
-  console.log(item.author, !error);
-  return item.author && !error ? (
+  return item.author ? (
     <List.Item className="post-con" key={item.id}>
       {item.author.id === user.pk ? (
         <div style={{ display: "flex", float: "right" }}>
@@ -416,7 +433,7 @@ export const CoursePostDetail = (props) => {
             style={{ marginLeft: "10px" }}
             placement="bottomRight"
             title="Are you sure want to delete this post?"
-            onConfirm={() => deletepost()}
+            onConfirm={deletepost}
             okText="Yes"
             cancelText="No"
             icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
@@ -454,12 +471,15 @@ export const CoursePostDetail = (props) => {
       </div>
     </List.Item>
   ) : (
-    <h3>404 Not found</h3>
+    <h3>Something went wrong...</h3>
   );
 };
 
 export const CoursePostEdit = (props) => {
   const [post, setPost] = useState(null);
+  const allcourse = useContext(CourseContext);
+  let findcourse = allcourse.find((e) => e.name == props.match.params.course);
+
   const normFile = (e) => {
     console.log("Upload event:", e);
     if (Array.isArray(e)) {
@@ -473,44 +493,79 @@ export const CoursePostEdit = (props) => {
     }, 0);
   };
   const onFinish = (values) => {
-    console.log(values);
-    const fd = new FormData();
-    fd.append("title", values.title);
-    fd.append("content", values.content);
-    if (values.upload) {
-      let newupload = values.upload.filter((e) => !e.id);
-      let oldupload = values.upload.filter((e) => e.id);
-      let deleteoldupload = post.announcefile.filter(
-        (e) => !oldupload.find((f) => f.id == e.id)
-      );
-      for (const i in newupload) {
-        fd.append("announcefile", newupload[i].originFileObj);
-      }
-      if (deleteoldupload.length) {
-        fd.append(
-          "deletefile",
-          deleteoldupload.map((e) => e.id)
+    cusConfirm({
+      title: "Update this post",
+      icon: <SaveTwoTone />,
+      content: "Do you sure want to update these changes?",
+      okText: "Update",
+      okType: "primary",
+      cancelText: "Cancel",
+      async onOk() {
+        console.log(values);
+        const fd = new FormData();
+        fd.append("title", values.title);
+        fd.append("content", values.content);
+        if (values.upload) {
+          let newupload = values.upload.filter((e) => !e.id);
+          let oldupload = values.upload.filter((e) => e.id);
+          let deleteoldupload = post.coursefile.filter(
+            (e) => !oldupload.find((f) => f.id == e.id)
+          );
+          for (const i in newupload) {
+            fd.append("coursefile", newupload[i].originFileObj);
+          }
+          if (deleteoldupload.length) {
+            fd.append(
+              "deletefile",
+              deleteoldupload.map((e) => e.id)
+            );
+          } else {
+            fd.append("deletefile", 0);
+          }
+          console.log(deleteoldupload);
+        } else {
+          fd.append("deletefile", 0);
+        }
+        ApiCourse(
+          "put",
+          (res) => {
+            if (res.status == 200) {
+              message.success("post updated!");
+              props.history.push(
+                `/course/${props.match.params.course}/${props.match.params.id}`
+              );
+            } else {
+              console.log(res);
+            }
+          },
+          {
+            courseId: findcourse.id,
+            id: props.match.params.id,
+            formdata: fd,
+          }
         );
-      } else {
-        fd.append("deletefile", 0);
-      }
-      console.log(deleteoldupload);
-    } else {
-      fd.append("deletefile", 0);
-    }
-    axios
-      .put(`api/announcement/${props.match.params.id}/`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((res) =>
-        props.history.push(`/announcement/${props.match.params.id}`)
-      );
+      },
+    });
   };
 
   const loadData = async () => {
-    let request = await axios.get(`api/announcement/${props.match.params.id}/`);
-    let data = await request.data;
-    setPost(data);
+    ApiCourse(
+      "retrieve",
+      (res) => {
+        if (res.status == 200) {
+          setPost(res.data);
+        } else if (res.status == 404) {
+          message.error("Post Not Found!");
+          props.history.push(`/course/${props.match.params.course}`);
+        } else {
+          message.error(res.data.detail);
+        }
+      },
+      {
+        courseId: findcourse.id,
+        id: props.match.params.id,
+      }
+    );
   };
   useEffect(() => {
     loadData();
@@ -544,7 +599,7 @@ export const CoursePostEdit = (props) => {
           iconRender={handleIconRender}
           style={{ maxWidth: "300px" }}
           defaultFileList={[
-            ...post.announcefile.map((f) => {
+            ...post.coursefile.map((f) => {
               f.uid = f.id;
               f.name = fileName(f.file);
               f.url = f.file;

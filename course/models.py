@@ -18,6 +18,7 @@ class CoursePost(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, default=None)
     author = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
     date_posted = models.DateTimeField(default=timezone.now)
+    date_updated = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=30, choices=[("pending", "Pending"), (
         "permitted", "Permitted"), ("disallowed", "Disallowed")], default="pending")
 
@@ -47,11 +48,10 @@ class Batch(models.Model):
 class BatchPost(models.Model):
     title = models.CharField(max_length=400)
     content = models.TextField()
-    batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, default=None)
     author = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
     date_posted = models.DateTimeField(default=timezone.now)
-    status = models.CharField(max_length=30, choices=[("pending", "Pending"), (
-        "permitted", "Permitted"), ("disallowed", "Disallowed")], default="pending")
+    date_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.batch.name} | {self.title} by {self.author.username}"
@@ -59,7 +59,7 @@ class BatchPost(models.Model):
 
 class BatchPostFile(models.Model):
     post = models.ForeignKey(
-        BatchPost, on_delete=models.CASCADE, default=None, blank=True)
+        BatchPost, on_delete=models.CASCADE, default=None, blank=True, related_name="batchfile")
     file = models.FileField(upload_to='batchpost_file/', null=True)
 
     def __str__(self):

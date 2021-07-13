@@ -45,6 +45,41 @@ class CoursePostSerializer(serializers.ModelSerializer):
                 fl.save()
         return post
 
+    def update(self, instance, validated_data):
+        print(validated_data)
+        if validated_data.get('coursefile'):
+            files = validated_data.pop('coursefile').getlist('coursefile')
+        else:
+            files = []
+        if validated_data.get('deletefile'):
+            deletefiles = validated_data.pop('deletefile').split(',')
+        instance.title = validated_data.get('title', instance.title)
+        instance.content = validated_data.get('content', instance.content)
+        user = None
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+
+        if user:
+            if user.detail.identity == "teacher" or user.detail.identity == "admin":
+                instance.status = validated_data.get('status', instance.status)
+            elif user.detail.identity == "student":
+                instance.status = "pending"
+        instance.save()
+        if len(files):
+            for file in files:
+                fl = CoursePostFile(file=file, post=instance)
+                fl.save()
+        try:
+            deletefiles
+        except NameError:
+            print('no deletefiles')
+        else:
+            if int(deletefiles[0]):
+                for num in deletefiles:
+                    CoursePostFile.objects.get(pk=int(num)).delete()
+        return instance
+
 
 class BatchSerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,17 +87,33 @@ class BatchSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class BatchPostFileSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    file = serializers.FileField(allow_null=True)
+
+    class Meta:
+        model = BatchPostFile
+        fields = ['id', 'file']
+
+
 class BatchPostSerializer(serializers.ModelSerializer):
     author = Author(read_only=True)
+    batchfile = BatchPostFileSerializer(
+        many=True, required=False, allow_null=True)
+
     class Meta:
         model = BatchPost
         fields = '__all__'
 
-
-class BatchPostFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BatchPostFile
-        fields = '__all__'
+    def create(self, validated_data):
+        print(validated_data)
+        files = validated_data.pop('batchfile').getlist('batchfile')
+        post = BatchPost.objects.create(**validated_data)
+        if len(files):
+            for file in files:
+                fl = BatchPostFile(file=file, post=post)
+                fl.save()
+        return post
 
 
 class BatchPostReplySerializer(serializers.ModelSerializer):
