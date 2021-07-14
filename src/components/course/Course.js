@@ -570,6 +570,7 @@ export const CoursePostEdit = (props) => {
   useEffect(() => {
     loadData();
   }, []);
+  
   return post ? (
     <Form
       name="nest-messages"

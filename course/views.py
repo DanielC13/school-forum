@@ -49,14 +49,15 @@ class CoursePostViewSet(viewsets.ModelViewSet):
             CoursePost.objects.get(pk=pk), data=request.data)
         if serializer.is_valid():
             serializer.validated_data['coursefile'] = request.FILES
-            serializer.validated_data['deletefile'] = request.data['deletefile']
+            serializer.validated_data['deletefile'] = request.data.get(
+                'deletefile', "")
             serializer.save()
             return Response(serializer.data)
 
 
 class BatchViewSet(viewsets.ModelViewSet):
     serializer_class = BatchSerializer
-    permission_classes = [IsAdminCanEdit]
+    permission_classes = [IsAuthenticated, IsAdminCanEdit]
     pagination_class = None
 
     def get_queryset(self):
@@ -94,6 +95,16 @@ class BatchPostViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data)
         print(serializer.errors)
+
+    def update(self, request, pk, **kwargs):
+        serializer = self.serializer_class(
+            BatchPost.objects.get(pk=pk), data=request.data)
+        if serializer.is_valid():
+            serializer.validated_data['batchfile'] = request.FILES
+            serializer.validated_data['deletefile'] = request.data.get(
+                'deletefile', "")
+            serializer.save()
+            return Response(serializer.data)
 
 
 class BatchPostReplyViewSet(viewsets.ModelViewSet):

@@ -115,6 +115,31 @@ class BatchPostSerializer(serializers.ModelSerializer):
                 fl.save()
         return post
 
+    def update(self, instance, validated_data):
+        print(validated_data)
+        if validated_data.get('batchfile'):
+            files = validated_data.pop('batchfile').getlist('batchfile')
+        else:
+            files = []
+        if validated_data.get('deletefile'):
+            deletefiles = validated_data.pop('deletefile').split(',')
+        instance.title = validated_data.get('title', instance.title)
+        instance.content = validated_data.get('content', instance.content)
+        instance.save()
+        if len(files):
+            for file in files:
+                fl = BatchPostFile(file=file, post=instance)
+                fl.save()
+        try:
+            deletefiles
+        except NameError:
+            print('no deletefiles')
+        else:
+            if int(deletefiles[0]):
+                for num in deletefiles:
+                    BatchPostFile.objects.get(pk=int(num)).delete()
+        return instance
+
 
 class BatchPostReplySerializer(serializers.ModelSerializer):
     class Meta:

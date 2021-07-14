@@ -239,28 +239,44 @@ export const ApiCourse = async (method, callback, args) => {
 
 export const ApiBatch = async (method, callback, args) => {
   if (!args) return console.log("requires object arguments");
-  let { type = null, batchId = null, courseId = null, formdata = null } = args;
+  let {
+    type = null,
+    batchId = null,
+    courseId = null,
+    formdata = null,
+    id = null,
+  } = args;
   switch (method) {
     case "get":
       // console.log("GET method");
-      if (type == "posts") {
-        if (batchId && courseId) {
+      switch (type) {
+        case "posts":
+          if (batchId && courseId) {
+            await axios
+              .get(`api/course/${courseId}/batch/${batchId}/posts/`)
+              .then((res) => callback(res))
+              .catch((error) => callback(error.response));
+          } else {
+            console.log(
+              'GET method with type "posts" requires "batchId" and "courseId" in object argument '
+            );
+          }
+          break;
+        case "detail":
+          if (!batchId || !courseId)
+            return console.log(
+              'GET method with type "detail" requires "batchId" and "courseId" in object argument '
+            );
           await axios
-            .get(`api/course/${courseId}/batch/${batchId}/posts/`)
+            .get(`api/course/${courseId}/batch/${batchId}/`)
             .then((res) => callback(res))
             .catch((error) => callback(error.response));
-        } else {
+          break;
+        default:
           console.log(
-            'GET method with type "posts" requires "batchId" and "courseId" in object argument '
+            'GET method requires "type" in object argument, there is 2 available types ["posts","detail"]'
           );
-        }
-        return;
-      } else if (type == "detail") {
-        return;
-      } else {
-        console.log(
-          'GET method requires "type" in object argument, there is 2 available types ["posts","detail"]'
-        );
+          break;
       }
       break;
     case "post":
@@ -278,9 +294,48 @@ export const ApiBatch = async (method, callback, args) => {
         );
       }
       break;
+    case "retrieve":
+      // console.log("RETRIEVE method");
+      if (courseId && id && batchId) {
+        await axios
+          .get(`api/course/${courseId}/batch/${batchId}/posts/${id}/`)
+          .then((res) => {
+            callback(res);
+          })
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'RETRIEVE method requires "batchId", "id" and "courseId" in object argument'
+        );
+      }
+      break;
+    case "put":
+      // console.log("PUT method");
+      if (courseId && id && batchId && formdata) {
+        await axios
+          .put(`api/course/${courseId}/batch/${batchId}/posts/${id}/`, formdata)
+          .then((res) => {
+            callback(res);
+          })
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'RETRIEVE method requires "batchId", "id", "formdata" and "courseId" in object argument'
+        );
+      }
+      break;
     case "delete":
       console.log("DELETE method");
-
+      if (courseId && batchId && id) {
+        await axios
+          .delete(`api/course/${courseId}/batch/${batchId}/posts/${id}/`)
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'DELETE method requires "courseId" and "id" in object argument'
+        );
+      }
       break;
     default:
       console.log("get, retrieve, post, put & delete method is available");
