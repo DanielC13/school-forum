@@ -1,12 +1,35 @@
 import React, { useContext, useState, useEffect } from "react";
 import { UserContext } from "../../AllContext";
-import { Card, Empty, Button, List, Spin, Space } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import {
+  Card,
+  Empty,
+  Button,
+  List,
+  Spin,
+  Space,
+  message,
+  Form,
+  Input,
+  Upload,
+  Popconfirm,
+  Modal,
+} from "antd";
+import {
+  LoadingOutlined,
+  UploadOutlined,
+  EditOutlined,
+  ExclamationCircleOutlined,
+  DeleteOutlined,
+  SaveTwoTone,
+} from "@ant-design/icons";
 import Loading from "../Loading";
 import axios from "axios";
 import InfiniteScroll from "react-infinite-scroller";
-import { convertUTC, fileType, fileName } from "../tools";
+import { convertUTC, fileType, fileName, handleIconRender } from "../tools";
+import { ApiGroup } from "../apiRequest";
 const { Meta } = Card;
+const { confirm: cusConfirm } = Modal;
+
 export const Group = (props) => {
   const { user } = useContext(UserContext);
   return (
@@ -19,7 +42,6 @@ export const Group = (props) => {
               style={{ width: 200, margin: "10px" }}
               hoverable={true}
               onClick={() => {
-                console.log(props.match.params.id);
                 props.history.push(`group/${group.id}`);
               }}
             >
@@ -45,64 +67,80 @@ export const Group = (props) => {
 };
 
 export const GroupPost = (props) => {
-  const [status, setStatus] = useState({});
-  const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
+  const [data, setData] = useState({ next: null });
+  const [posts, setPosts] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasmore] = useState(true);
   const { user } = useContext(UserContext);
 
   useEffect(() => {
+    if (
+      !user.is_members
+        .map((e) => e.id)
+        .includes(parseInt(props.match.params.group))
+    ) {
+      message.warn(`Access denied, You're not the member of this group!`);
+      return props.history.push(`/group`);
+    }
     fetchData((res) => {
-      setStatus(res);
-      setData(res.results);
+      // posts have to generate before data
+      setPosts(res.results);
+      setData(res);
     }, true);
-  }, [props.match.params.id]);
+  }, []);
 
-  const IconText = ({ icon, text }) => (
-    <Space>
-      {React.createElement(icon)}
-      {text}
-    </Space>
-  );
+  useEffect(() => {
+    document.addEventListener("scroll", trackScroll);
+  }, [data.next]);
 
-  const fetchData = (callback, resetpage) => {
-    if (resetpage) {
-      // console.log("am i joke");
-      setHasmore(true);
-      setPage(1);
-      console.log(page);
+  const isBottom = (el) => {
+    return el.getBoundingClientRect().bottom <= window.outerHeight;
+  };
+  const trackScroll = async () => {
+    const wrappedElement = document.getElementById("footer");
+    if (isBottom(wrappedElement)) {
+      // console.log("bottom reached!");
+      document.removeEventListener("scroll", trackScroll);
+      if (data) {
+        let { next = null } = data;
+        if (next == null) return console.log("no data!");
+        setLoading(true);
+        await axios
+          .get(next)
+          .then((res) => {
+            let morePost = posts.concat(res.data.results);
+            setPosts(morePost);
+            setData(res.data);
+            // console.log(morePost);
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.log(error);
+            console.log(error.response);
+            document.removeEventListener("scroll", trackScroll);
+          });
+      }
     }
-    axios
-      .get(`api/group/${props.match.params.id}/posts/?page=${page}`)
-      .then((res) => {
-        callback(res.data);
-        setPage((page) => page + 1);
-      });
-    console.log(page);
   };
 
-  const handleInfiniteOnLoad = () => {
-    setLoading(true);
-    console.log(status);
-    if (status.next == null) {
-      // message.warning("Infinite List loaded all");
-      setHasmore(false);
-      setLoading(false);
-      return;
-    }
-    fetchData((res) => {
-      console.log("omegalul");
-      let newdata = data.concat(res.results);
-      // cannot do page++
-      setStatus(res);
-      setData(newdata);
-      setLoading(false);
-    }, false);
-    console.log("onload");
+  const fetchData = async (callback) => {
+    await ApiGroup(
+      "get",
+      (res) => {
+        if (!res) {
+          message.error("Something Went Wrong");
+          return props.history.goBack();
+        }
+        if (res.status == 200) {
+          callback(res.data);
+        } else {
+          console.log(res);
+        }
+      },
+      { type: "posts", groupId: props.match.params.group }
+    );
   };
-  // console.log(page);
-  return (
+
+  return posts ? (
     <div>
       <div
         style={{
@@ -114,47 +152,411 @@ export const GroupPost = (props) => {
         {user.is_staff ? (
           <Button
             type="primary"
-            onClick={() => props.history.push("/group/add")}
+            onClick={() =>
+              props.history.push(`${props.match.params.group}/add`)
+            }
           >
-            + New Post
+            + New Group Post
           </Button>
         ) : (
           <span></span>
         )}
       </div>
       <div className="demo-infinite-container">
-        <InfiniteScroll
-          initialLoad={false}
-          pageStart={1}
-          loadMore={handleInfiniteOnLoad}
-          hasMore={!loading && hasMore}
-          // useWindow={false}
-        >
-          <List
-            itemLayout="vertical"
-            dataSource={data}
-            renderItem={(item) => (
-              <List.Item
-                className="post-con"
-                key={item.id}
-                onClick={() => props.history.push(`announcement/${item.id}`)}
-              >
-                <List.Item.Meta
-                  title={<h4>{item.title}</h4>}
-                  description={item.author.username}
-                />
-                {convertUTC(item.date_posted)}
-              </List.Item>
-            )}
+        {posts.map((post) => (
+          <List.Item
+            className="post-con"
+            key={post.id}
+            onClick={() =>
+              props.history.push(`${props.match.params.group}/${post.id}`)
+            }
           >
-            {loading && hasMore && (
-              <div className="demo-loading-container">
-                <Spin indicator={<LoadingOutlined />} />
-              </div>
-            )}
-          </List>
-        </InfiniteScroll>
+            <List.Item.Meta
+              title={<h4>{post.title}</h4>}
+              description={post.author.username}
+            />
+            {convertUTC(post.date_posted)}
+          </List.Item>
+        ))}
+        {loading ? (
+          <div className="loading-container" style={{ width: "100%" }}>
+            <Spin
+              size="large"
+              indicator={<LoadingOutlined />}
+              style={{ display: "block", margin: "auto" }}
+            />
+          </div>
+        ) : (
+          <span></span>
+        )}
       </div>
     </div>
+  ) : (
+    <p>loading ...</p>
+  );
+};
+
+export const GroupPostAdd = (props) => {
+  const { user } = useContext(UserContext);
+
+  useEffect(() => {
+    if (
+      !user.is_members
+        .map((e) => e.id)
+        .includes(parseInt(props.match.params.group))
+    ) {
+      message.warn(`Access denied, You're not the member of this group!`);
+      return props.history.push(`/group`);
+    }
+  }, []);
+
+  const normFile = (e) => {
+    console.log("Upload event:", e);
+    if (Array.isArray(e)) {
+      return e;
+    }
+    return e && e.fileList;
+  };
+  const dummyRequest = ({ file, onSuccess }) => {
+    setTimeout(() => {
+      onSuccess("ok");
+    }, 0);
+  };
+
+  const onFinish = (values) => {
+    console.log(values);
+    const fd = new FormData();
+    fd.append("title", values.title);
+    fd.append("content", values.content);
+    if (values.upload) {
+      for (let i = 0; i < values.upload.length; i++) {
+        fd.append("groupfile", values.upload[i].originFileObj);
+      }
+    }
+    ApiGroup(
+      "post",
+      (res) => {
+        if (res.status == 400) {
+          for (const key in res.data) {
+            if (Object.hasOwnProperty.call(res.data, key)) {
+              message.error(res.data[key]);
+            }
+          }
+        } else if (res.status == 200) {
+          message.success("Post has been created!");
+          props.history.goBack();
+        } else {
+          console.log(res);
+        }
+      },
+      {
+        groupId: props.match.params.group,
+        formdata: fd,
+      }
+    );
+  };
+
+  return (
+    <div>
+      <h2>New Group Post</h2>
+      <Form
+        name="nest-messages"
+        onFinish={onFinish}
+        style={{ padding: "20px", minHeight: "40vh" }}
+      >
+        <Form.Item name="title" label="Title" rules={[{ required: true }]}>
+          <Input />
+        </Form.Item>
+        <Form.Item name="content" label="Content" rules={[{ required: true }]}>
+          <Input.TextArea />
+        </Form.Item>
+        <Form.Item
+          name="upload"
+          label="Upload"
+          valuePropName="fileList"
+          getValueFromEvent={normFile}
+        >
+          <Upload
+            name="logo"
+            customRequest={dummyRequest}
+            listType="picture"
+            iconRender={handleIconRender}
+            style={{ maxWidth: "300px" }}
+          >
+            <Button icon={<UploadOutlined />}>Click to upload</Button>
+          </Upload>
+        </Form.Item>
+
+        <Form.Item style={{ float: "right" }}>
+          <Button type="primary" htmlType="submit" size="large">
+            Submit
+          </Button>
+        </Form.Item>
+      </Form>
+    </div>
+  );
+};
+
+export const GroupPostDetail = (props) => {
+  const [item, setItem] = useState([]);
+  const { user } = useContext(UserContext);
+  const fetchData = (callback) => {
+    ApiGroup(
+      "retrieve",
+      (res) => {
+        if (res.status == 200) {
+          callback(res);
+        } else if (res.status == 404) {
+          message.error("Post Not Found!");
+          props.history.goBack();
+        } else {
+          message.error(res.data.detail);
+        }
+      },
+      {
+        groupId: props.match.params.group,
+        id: props.match.params.id,
+      }
+    );
+  };
+
+  useEffect(() => {
+    if (
+      !user.is_members
+        .map((e) => e.id)
+        .includes(parseInt(props.match.params.group))
+    ) {
+      console.log(
+        user.is_members.map((e) => e.id),
+        props.match.params,
+        user.is_members.map((e) => e.id).includes(parseInt(props.match.params))
+      );
+      message.warn(`Access denied, You're not the member of this group!`);
+      return props.history.push(`/group`);
+    }
+    fetchData((res) => setItem(res.data));
+  }, []);
+
+  const deletepost = () => {
+    ApiGroup(
+      "delete",
+      (res) => {
+        if (res.status == 204) {
+          message.success("post has been deleted");
+          props.history.goBack();
+        } else {
+          console.log(res);
+        }
+      },
+      {
+        groupId: props.match.params.group,
+        id: props.match.params.id,
+      }
+    );
+  };
+
+  return item.author ? (
+    <List.Item className="post-con" key={item.id}>
+      {item.author.id === user.pk ? (
+        <div style={{ display: "flex", float: "right" }}>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() =>
+              props.history.push({
+                pathname: `${item.id}/edit`,
+              })
+            }
+          >
+            edit
+          </Button>
+          <Popconfirm
+            style={{ marginLeft: "10px" }}
+            placement="bottomRight"
+            title="Are you sure want to delete this post?"
+            onConfirm={deletepost}
+            okText="Yes"
+            cancelText="No"
+            icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
+          >
+            <Button icon={<DeleteOutlined />} danger type="text">
+              delete
+            </Button>
+          </Popconfirm>
+        </div>
+      ) : (
+        <span></span>
+      )}
+      <List.Item.Meta
+        title={<h2>{item.title}</h2>}
+        description={
+          item.author.username + " | " + convertUTC(item.date_posted)
+        }
+      />
+      {item.content}
+      <div style={{ width: "50%", margin: "20px" }}>
+        <Upload
+          listType="picture"
+          defaultFileList={[
+            ...item.groupfile.map((f) => {
+              f.uid = f.id;
+              f.name = fileName(f.file);
+              f.url = f.file;
+              f.status = "done";
+              return f;
+            }),
+          ]}
+          iconRender={handleIconRender}
+          disabled={true}
+        ></Upload>
+      </div>
+    </List.Item>
+  ) : (
+    <h3>Something went wrong...</h3>
+  );
+};
+
+export const GroupPostEdit = (props) => {
+  const [post, setPost] = useState(null);
+
+  const normFile = (e) => {
+    console.log("Upload event:", e);
+    if (Array.isArray(e)) {
+      return e;
+    }
+    return e && e.fileList;
+  };
+  const dummyRequest = ({ file, onSuccess }) => {
+    setTimeout(() => {
+      onSuccess("ok");
+    }, 0);
+  };
+  const onFinish = (values) => {
+    cusConfirm({
+      title: "Update this post",
+      icon: <SaveTwoTone />,
+      content: "Do you sure want to update these changes?",
+      okText: "Update",
+      okType: "primary",
+      cancelText: "Cancel",
+      async onOk() {
+        console.log(values);
+        const fd = new FormData();
+        fd.append("title", values.title);
+        fd.append("content", values.content);
+        if (values.upload) {
+          let newupload = values.upload.filter((e) => !e.id);
+          let oldupload = values.upload.filter((e) => e.id);
+          let deleteoldupload = post.groupfile.filter(
+            (e) => !oldupload.find((f) => f.id == e.id)
+          );
+          for (const i in newupload) {
+            fd.append("groupfile", newupload[i].originFileObj);
+          }
+          if (deleteoldupload.length) {
+            fd.append(
+              "deletefile",
+              deleteoldupload.map((e) => e.id)
+            );
+          } else {
+            fd.append("deletefile", 0);
+          }
+          console.log(deleteoldupload);
+        } else {
+          fd.append("deletefile", 0);
+        }
+        ApiGroup(
+          "put",
+          (res) => {
+            if (res.status == 200) {
+              message.success("post updated!");
+              props.history.goBack();
+            } else {
+              console.log(res);
+            }
+          },
+          {
+            groupId: props.match.params.group,
+            id: props.match.params.id,
+            formdata: fd,
+          }
+        );
+      },
+    });
+  };
+
+  const loadData = async () => {
+    ApiGroup(
+      "retrieve",
+      (res) => {
+        if (res.status == 200) {
+          setPost(res.data);
+        } else if (res.status == 404) {
+          message.error("Post Not Found!");
+          props.history.goBack();
+        } else {
+          message.error(res.data.detail);
+        }
+      },
+      {
+        groupId: props.match.params.group,
+        id: props.match.params.id,
+      }
+    );
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  return post ? (
+    <Form
+      name="nest-messages"
+      onFinish={onFinish}
+      style={{ padding: "20px", minHeight: "40vh" }}
+      initialValues={{
+        ["title"]: post.title,
+        ["content"]: post.content,
+      }}
+    >
+      <Form.Item name="title" label="Title" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="content" label="Content" rules={[{ required: true }]}>
+        <Input.TextArea />
+      </Form.Item>
+      <Form.Item
+        name="upload"
+        label="Upload"
+        valuePropName="fileList"
+        getValueFromEvent={normFile}
+      >
+        <Upload
+          name="logo"
+          customRequest={dummyRequest}
+          listType="picture"
+          iconRender={handleIconRender}
+          style={{ maxWidth: "300px" }}
+          defaultFileList={[
+            ...post.groupfile.map((f) => {
+              f.uid = f.id;
+              f.name = fileName(f.file);
+              f.url = f.file;
+              f.status = "done";
+              return f;
+            }),
+          ]}
+        >
+          <Button icon={<UploadOutlined />}>Click to upload</Button>
+        </Upload>
+      </Form.Item>
+
+      <Form.Item style={{ float: "right" }}>
+        <Button type="primary" htmlType="submit" size="large">
+          Submit
+        </Button>
+      </Form.Item>
+    </Form>
+  ) : (
+    <h3>:3</h3>
   );
 };

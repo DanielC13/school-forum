@@ -325,7 +325,7 @@ export const ApiBatch = async (method, callback, args) => {
       }
       break;
     case "delete":
-      console.log("DELETE method");
+      // console.log("DELETE method");
       if (courseId && batchId && id) {
         await axios
           .delete(`api/course/${courseId}/batch/${batchId}/posts/${id}/`)
@@ -334,6 +334,95 @@ export const ApiBatch = async (method, callback, args) => {
       } else {
         console.log(
           'DELETE method requires "courseId" and "id" in object argument'
+        );
+      }
+      break;
+    default:
+      console.log("get, retrieve, post, put & delete method is available");
+  }
+};
+
+export const ApiGroup = async (method, callback, args) => {
+  if (!args) return console.log("requires object arguments");
+  let { type = null, formdata = null, groupId = null, id = null } = args;
+  switch (method) {
+    case "get":
+      // console.log("GET method");
+      switch (type) {
+        case "posts":
+          if (groupId) {
+            await axios
+              .get(`api/group/${groupId}/posts/`)
+              .then((res) => callback(res))
+              .catch((error) => callback(error.response));
+          } else {
+            console.log('GET method requires "groupId" in object argument');
+          }
+          break;
+        case "detail":
+          break;
+        default:
+          console.log(
+            'GET method requires "type" in object argument, there is 2 available types ["posts","detail"]'
+          );
+          break;
+      }
+      break;
+    case "post":
+      // console.log("POST method");
+      if (groupId && formdata) {
+        await axios
+          .put(`api/group/${groupId}/posts/`, formdata, {
+            headers: { "Content-Type": "multipart/form-data" },
+          })
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'POST method requires "groupid" and "formdata" in object argument'
+        );
+      }
+      break;
+    case "retrieve":
+      // console.log("RETRIEVE method");
+      if (groupId && id) {
+        await axios
+          .get(`api/group/${groupId}/posts/${id}/`)
+          .then((res) => {
+            callback(res);
+          })
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'RETRIEVE method requires "groupId" and "id" in object argument'
+        );
+      }
+      break;
+    case "put":
+      // console.log("PUT method");
+      if (groupId && id && formdata) {
+        await axios
+          .put(`api/group/${groupId}/posts/${id}/`, formdata)
+          .then((res) => {
+            callback(res);
+          })
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'RETRIEVE method requires "id", "formdata" and "groupId" in object argument'
+        );
+      }
+      break;
+    case "delete":
+      console.log("DELETE method");
+      if (groupId && id) {
+        await axios
+          .delete(`api/group/${groupId}/posts/${id}/`)
+          .then((res) => callback(res))
+          .catch((error) => callback(error.response));
+      } else {
+        console.log(
+          'DELETE method requires "groupId" and "id" in object argument'
         );
       }
       break;

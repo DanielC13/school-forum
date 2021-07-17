@@ -27,7 +27,13 @@ import {
   BatchPostDetail,
   BatchPostEdit,
 } from "./components/batch/Batch";
-import { Group, GroupPost } from "./components/group/Group";
+import {
+  Group,
+  GroupPost,
+  GroupPostAdd,
+  GroupPostDetail,
+  GroupPostEdit,
+} from "./components/group/Group";
 
 const BaseRouter = (props) => {
   const {
@@ -105,7 +111,18 @@ const BaseRouter = (props) => {
                 component={BatchPostEdit}
               />
               <Route exact path="/group" component={Group} />
-              <Route exact path="/group/:id" component={GroupPost} />
+              <Route exact path="/group/:group" component={GroupPost} />
+              <Route exact path="/group/:group/add" component={GroupPostAdd} />
+              <Route
+                exact
+                path="/group/:group/:id"
+                component={GroupPostDetail}
+              />
+              <Route
+                exact
+                path="/group/:group/:id/edit"
+                component={GroupPostEdit}
+              />
               <Redirect from="*" to="/home" />
             </Switch>
           ) : (
