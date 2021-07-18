@@ -430,3 +430,37 @@ export const ApiGroup = async (method, callback, args) => {
       console.log("get, retrieve, post, put & delete method is available");
   }
 };
+
+export const ApiGroupPostComments = async (method, callback, args) => {
+  if (!args) return console.log("requires object arguments");
+  let { groupId = null, postId = null, commentId = null,formdata = null } = args;
+  switch (method) {
+    case "get":
+      if (groupId && postId) {
+        await axios
+          .get(`api/group/${groupId}/posts/${postId}/comments/`)
+          .then((res) => callback(res))
+          .catch((res) => callback(res));
+      } else {
+        console.log(
+          'GET method requires "groupId" and "postId" in object arguments'
+        );
+      }
+      break;
+    case "post":
+      if (groupId && postId && formdata) {
+        await axios
+          .post(`api/group/${groupId}/posts/${postId}/comments/`,formdata)
+          .then((res) => callback(res))
+          .catch((res) => callback(res));
+      } else {
+        console.log(
+          'GET method requires "formdata", "groupId" and "postId" in object arguments'
+        );
+      }
+      break;
+    default:
+      console.log("get, post, put & delete method is available");
+      break;
+  }
+};

@@ -58,7 +58,7 @@ class CommentSection(permissions.BasePermission):
         if view.action in ['retrieve']:
             return get_object_or_404(Group, pk=int(request.parser_context['kwargs']['groupid'])) in request.user.is_members.all()
         if view.action in ['update', 'partial_update', 'destroy']:
-            return obj.post.author == request.user or obj.reply_by == request.user
+            return obj.post.author == request.user or obj.comment_by == request.user
 
 
 class GroupRequestOnly(permissions.BasePermission):

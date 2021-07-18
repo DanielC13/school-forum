@@ -46,7 +46,7 @@ class GroupPostSerializer(serializers.ModelSerializer):
                 fl = GroupPostFile(file=file, post=post)
                 fl.save()
         return post
-    
+
     def update(self, instance, validated_data):
         print(validated_data)
         if validated_data.get('groupfile'):
@@ -57,7 +57,7 @@ class GroupPostSerializer(serializers.ModelSerializer):
             deletefiles = validated_data.pop('deletefile').split(',')
         instance.title = validated_data.get('title', instance.title)
         instance.content = validated_data.get('content', instance.content)
- 
+
         instance.save()
         if len(files):
             for file in files:
@@ -74,7 +74,9 @@ class GroupPostSerializer(serializers.ModelSerializer):
         return instance
 
 
-class GroupPostReplySerializer(serializers.ModelSerializer):
+class GroupPostCommentSerializer(serializers.ModelSerializer):
+    comment_by = AuthorSerializer(read_only=True)
+
     class Meta:
-        model = GroupPostReply
+        model = GroupPostComment
         fields = '__all__'

@@ -13,6 +13,8 @@ import {
   Upload,
   Popconfirm,
   Modal,
+  Comment,
+  TextArea,
 } from "antd";
 import {
   LoadingOutlined,
@@ -26,7 +28,7 @@ import Loading from "../Loading";
 import axios from "axios";
 import InfiniteScroll from "react-infinite-scroller";
 import { convertUTC, fileType, fileName, handleIconRender } from "../tools";
-import { ApiGroup } from "../apiRequest";
+import { ApiGroup, ApiGroupPostComments } from "../apiRequest";
 const { Meta } = Card;
 const { confirm: cusConfirm } = Modal;
 
@@ -298,8 +300,12 @@ export const GroupPostAdd = (props) => {
 };
 
 export const GroupPostDetail = (props) => {
+  const [form] = Form.useForm();
   const [item, setItem] = useState([]);
   const { user } = useContext(UserContext);
+  const [comments, setComments] = useState([]);
+  const [submitingComment, setsubmitingComment] = useState(false);
+
   const fetchData = (callback) => {
     ApiGroup(
       "retrieve",
@@ -319,6 +325,43 @@ export const GroupPostDetail = (props) => {
       }
     );
   };
+  const fetchComments = (callback) => {
+    ApiGroupPostComments(
+      "get",
+      (res) => {
+        if (res.status == 200) {
+          callback(res);
+        } else {
+          console.log(res);
+        }
+      },
+      { groupId: props.match.params.group, postId: props.match.params.id }
+    );
+  };
+
+  const makeComments = async (value) => {
+    console.log(value);
+    setsubmitingComment(true);
+    await ApiGroupPostComments(
+      "post",
+      (res) => {
+        if (res.status == 200) {
+          let newcomments = comments.concat(res.data);
+          setComments(newcomments);
+          setsubmitingComment(false);
+          form.resetFields();
+        } else {
+          setsubmitingComment(false);
+          console.log(res);
+        }
+      },
+      {
+        groupId: props.match.params.group,
+        postId: props.match.params.id,
+        formdata: value,
+      }
+    );
+  };
 
   useEffect(() => {
     if (
@@ -335,6 +378,7 @@ export const GroupPostDetail = (props) => {
       return props.history.push(`/group`);
     }
     fetchData((res) => setItem(res.data));
+    fetchComments((res) => setComments(res.data));
   }, []);
 
   const deletepost = () => {
@@ -355,61 +399,111 @@ export const GroupPostDetail = (props) => {
     );
   };
 
-  return item.author ? (
-    <List.Item className="post-con" key={item.id}>
-      {item.author.id === user.pk ? (
-        <div style={{ display: "flex", float: "right" }}>
-          <Button
-            icon={<EditOutlined />}
-            onClick={() =>
-              props.history.push({
-                pathname: `${item.id}/edit`,
-              })
-            }
-          >
-            edit
-          </Button>
-          <Popconfirm
-            style={{ marginLeft: "10px" }}
-            placement="bottomRight"
-            title="Are you sure want to delete this post?"
-            onConfirm={deletepost}
-            okText="Yes"
-            cancelText="No"
-            icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
-          >
-            <Button icon={<DeleteOutlined />} danger type="text">
-              delete
+  return item.author && comments ? (
+    <div>
+      <List.Item className="post-con" key={item.id}>
+        {item.author.id === user.pk ? (
+          <div style={{ display: "flex", float: "right" }}>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() =>
+                props.history.push({
+                  pathname: `${item.id}/edit`,
+                })
+              }
+            >
+              edit
             </Button>
-          </Popconfirm>
+            <Popconfirm
+              style={{ marginLeft: "10px" }}
+              placement="bottomRight"
+              title="Are you sure want to delete this post?"
+              onConfirm={deletepost}
+              okText="Yes"
+              cancelText="No"
+              icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
+            >
+              <Button icon={<DeleteOutlined />} danger type="text">
+                delete
+              </Button>
+            </Popconfirm>
+          </div>
+        ) : (
+          <span></span>
+        )}
+        <List.Item.Meta
+          title={<h2>{item.title}</h2>}
+          description={
+            item.author.username + " | " + convertUTC(item.date_posted)
+          }
+        />
+        {item.content}
+        <div style={{ width: "50%", margin: "20px" }}>
+          <Upload
+            listType="picture"
+            defaultFileList={[
+              ...item.groupfile.map((f) => {
+                f.uid = f.id;
+                f.name = fileName(f.file);
+                f.url = f.file;
+                f.status = "done";
+                return f;
+              }),
+            ]}
+            iconRender={handleIconRender}
+            disabled={true}
+          ></Upload>
         </div>
-      ) : (
-        <span></span>
-      )}
-      <List.Item.Meta
-        title={<h2>{item.title}</h2>}
-        description={
-          item.author.username + " | " + convertUTC(item.date_posted)
-        }
-      />
-      {item.content}
-      <div style={{ width: "50%", margin: "20px" }}>
-        <Upload
-          listType="picture"
-          defaultFileList={[
-            ...item.groupfile.map((f) => {
-              f.uid = f.id;
-              f.name = fileName(f.file);
-              f.url = f.file;
-              f.status = "done";
-              return f;
-            }),
-          ]}
-          iconRender={handleIconRender}
-          disabled={true}
-        ></Upload>
-      </div>
-    </List.Item>
+        <List
+          style={{ margin: "5px" }}
+          className="comment-list"
+          header={`${comments.length} comment${comments.length > 0 ? "s" : ""}`}
+          itemLayout="horizontal"
+          dataSource={comments}
+          locale={{ emptyText: " " }}
+          renderItem={(item) => (
+            <li>
+              <Comment
+                author={
+                  <p style={{ fontSize: "14px" }}>{item.comment_by.username}</p>
+                }
+                content={<p style={{ fontSize: "17px" }}>{item.content}</p>}
+                datetime={
+                  <p style={{ fontSize: "13px" }}>
+                    {convertUTC(item.date_comment)}
+                  </p>
+                }
+              />
+            </li>
+          )}
+        />
+        <Form
+          onFinish={makeComments}
+          form={form}
+          style={{
+            border: "1px solid rgb(217, 217, 217)",
+            padding: "10px 10px 0 10px",
+            borderRadius: "3px",
+          }}
+        >
+          <Form.Item
+            name="content"
+            rules={[{ required: true, message: "Please write your comment" }]}
+          >
+            <Input.TextArea
+              autoSize={{ minRows: 2, maxRows: 5 }}
+              placeholder="Add a comment..."
+              style={{ fontSize: "17px", border: 0, marginTop: "3px" }}
+            />
+          </Form.Item>
+          <Form.Item style={{ textAlign: "right", margin: "0 0 10px 0" }}>
+            <Button htmlType="submit" loading={submitingComment} type="primary">
+              Add a comment
+            </Button>
+          </Form.Item>
+        </Form>
+      </List.Item>
+    </div>
   ) : (
     <h3>Something went wrong...</h3>
   );

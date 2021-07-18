@@ -7,5 +7,4 @@ site(Group)
 site(GroupRequest)
 site(GroupPost)
 site(GroupPostFile)
-site(GroupPostReply)
-
+site(GroupPostComment)

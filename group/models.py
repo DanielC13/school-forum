@@ -38,14 +38,16 @@ class GroupPost(models.Model):
         return f"{self.id} |{self.group.name} | {self.title} by {self.author.username}"
 
 
-class GroupPostReply(models.Model):
+class GroupPostComment(models.Model):
     content = models.CharField(max_length=500)
-    post = models.ForeignKey(GroupPost, on_delete=models.CASCADE)
-    reply_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    date_reply = models.DateTimeField(default=timezone.now)
+    post = models.ForeignKey(
+        GroupPost, related_name="comments", on_delete=models.CASCADE, default=None)
+    comment_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, default=None)
+    date_comment = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"{self.grouppost.group.name} | {self.grouppost.title} | {self.content} | {self.reply_by.username}"
+        return f"{self.post.group.name} | {self.post.title} | {self.content} | {self.comment_by.username}"
 
 
 class GroupPostFile(models.Model):

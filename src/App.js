@@ -32,6 +32,7 @@ function App() {
   const verify = async () => {
     try {
       if (cookies.tkn) {
+        // console.log(cookies);
         let res = await axios.post("dj-rest-auth/token/verify/", {
           token: cookies.tkn,
         });
@@ -41,6 +42,8 @@ function App() {
           let userdetail = await axios.get("dj-rest-auth/user/");
           setUser(userdetail.data);
           return true;
+        } else if (stat == 401) {
+          cookies.remove("tkn");
         }
         return false;
       }

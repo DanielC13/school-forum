@@ -10,7 +10,7 @@ router.register(r'(?P<groupid>\d+)/request',
                 ViewRequestViewSet, basename='viewrequest')
 router.register(r'(?P<groupid>\d+)/posts/(?P<postid>\d+)/file',
                 ViewPostFileViewSet, basename='viewpostfile')
-router.register(r'(?P<groupid>\d+)/posts/(?P<postid>\d+)/replies',
-                ViewPostReplyViewSet, basename='viewpostreplies')
+router.register(r'(?P<groupid>\d+)/posts/(?P<postid>\d+)/comments',
+                ViewPostCommentViewSet, basename='viewpostcomments')
 # router.register(r'myposts', MyPostsViewSet, basename='myposts')
 urlpatterns = router.urls

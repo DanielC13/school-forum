@@ -6,7 +6,7 @@ from django.utils import timezone
 
 class Announcement(models.Model):
     title = models.CharField(max_length=400)
-    content = models.TextField()
+    content = models.TextField(max_length=650, blank=True, null=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
     date_posted = models.DateTimeField(default=timezone.now)
 

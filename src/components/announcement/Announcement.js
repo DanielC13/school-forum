@@ -222,7 +222,11 @@ export const AnnouncementDetail = (props) => {
   };
   console.log(item.author);
   return item.author && !error ? (
-    <List.Item className="post-con" key={item.id}>
+    <List.Item
+      className="post-con"
+      key={item.id}
+      style={{ whiteSpace: "pre-line" }}
+    >
       {item.author.id === user.pk ? (
         <div style={{ display: "flex", float: "right" }}>
           <Button
@@ -318,12 +322,26 @@ export const AnnouncementAdd = (props) => {
       name="nest-messages"
       onFinish={onFinish}
       style={{ padding: "20px", minHeight: "40vh" }}
+      className="form-style"
+      layout="vertical"
     >
       <Form.Item name="title" label="Title" rules={[{ required: true }]}>
-        <Input />
+        <Input
+          className="input-title"
+          placeholder="Announcement title here..."
+        />
       </Form.Item>
-      <Form.Item name="content" label="Content" rules={[{ required: true }]}>
-        <Input.TextArea />
+      <Form.Item
+        name="content"
+        className="input-content-div"
+        label="Content"
+        rules={[{ required: true }]}
+      >
+        <Input.TextArea
+          className="input-content"
+          placeholder="What announcement do you like to make?"
+          autoSize={{ minRows: 3, maxRows: 6 }}
+        />
       </Form.Item>
       <Form.Item
         name="upload"

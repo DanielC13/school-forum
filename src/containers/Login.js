@@ -18,10 +18,14 @@ export const LoginForm = () => {
   const onFinish = async (values) => {
     let opt = { path: "/" };
     try {
-      let i = await axios.post("dj-rest-auth/login/", {
-        username: values.username,
-        password: values.password,
-      });
+      let i = await axios.post(
+        "dj-rest-auth/login/",
+        {
+          username: values.username,
+          password: values.password,
+        },
+        { headers: { Authorization: "" } }
+      );
       setCookie("tkn", i.data.access_token, opt);
       window.location.reload();
     } catch (error) {

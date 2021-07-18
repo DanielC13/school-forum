@@ -107,15 +107,29 @@ class ViewPostFileViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ViewPostReplyViewSet(viewsets.ModelViewSet):
-    serializer_class = GroupPostReplySerializer
+class ViewPostCommentViewSet(viewsets.ModelViewSet):
+    serializer_class = GroupPostCommentSerializer
     permission_classes = [IsAuthenticated, CommentSection]
+    pagination_class = None
 
     def get_queryset(self):
         groupid, postid = itemgetter('groupid', 'postid')(self.kwargs)
-        queryset = GroupPostReply.objects.filter(
+        queryset = GroupPostComment.objects.filter(
             post=postid, post__group=groupid)
         return queryset
+
+    def create(self, request, **kwargs):
+        postid, groupid = itemgetter('postid', 'groupid')(kwargs)
+        serializer = self.serializer_class(data=request.data)
+        print(request.data)
+        print(serializer.is_valid())
+        if serializer.is_valid():
+            serializer.validated_data['comment_by'] = request.user
+            serializer.validated_data['post'] = GroupPost.objects.get(
+                pk=postid)
+            serializer.save()
+            return Response(serializer.data)
+        print(serializer.errors)
 
 
 class MyPostsViewSet(viewsets.ModelViewSet):
